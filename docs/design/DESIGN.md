@@ -245,6 +245,8 @@ PNG は `screens/<段階>_<画面ID>.png`。スマホの画面とメール（幅
 
 ### A（核。先に作る）
 
+（※）Figma ではフレーム名に A/B/C が付いていないが、A の画面のボタンからつながっていて、要件定義でも A の機能なので A とした。同じく接頭辞のない B-BOX-AUTO（30分で自動的に不明）は、要件定義v2 で削除された機能なので取り込んでいない。
+
 | ファイル | 画面 |
 |---|---|
 | [A_V-DROP.png](screens/A_V-DROP.png) | QR受付 / 写真は任意 |
@@ -259,9 +261,12 @@ PNG は `screens/<段階>_<画面ID>.png`。スマホの画面とメール（幅
 | [A_M-LOGIN.png](screens/A_M-LOGIN.png) | 実行委員ログイン |
 | [A_M-BOXES.png](screens/A_M-BOXES.png) | 巡回 / BOX一覧 |
 | [A_M-BOX.png](screens/A_M-BOX.png) | BOXごとの通知と写真 |
+| [A_M-BOX-UNKNOWN.png](screens/A_M-BOX-UNKNOWN.png) | BOXの通知を不明にする（※） |
+| [A_M-BOX-UNKNOWN-STATE.png](screens/A_M-BOX-UNKNOWN-STATE.png) | BOXの不明通知と復帰（※） |
 | [A_M-SCAN.png](screens/A_M-SCAN.png) | 巡回用QR読み取り |
 | [A_M-COLLECTED.png](screens/A_M-COLLECTED.png) | 回収完了 |
 | [A_M-ITEMS.png](screens/A_M-ITEMS.png) | 物品一覧 |
+| [A_M-QUEUE.png](screens/A_M-QUEUE.png) | 回収済の物を本登録（※） |
 | [A_M-PHOTO.png](screens/A_M-PHOTO.png) | 本登録 / 写真を撮る |
 | [A_M-REGISTER.png](screens/A_M-REGISTER.png) | 本登録 / 手入力 |
 | [A_M-REVIEW.png](screens/A_M-REVIEW.png) | 本登録の内容確認 |
@@ -271,6 +276,7 @@ PNG は `screens/<段階>_<画面ID>.png`。スマホの画面とメール（幅
 | [A_M-REPORTS.png](screens/A_M-REPORTS.png) | 紛失届一覧 |
 | [A_M-REPORTS-NOTIFIED.png](screens/A_M-REPORTS-NOTIFIED.png) | 紛失届一覧（受取案内を通知済み） |
 | [A_M-REPORTS-SEARCHING.png](screens/A_M-REPORTS-SEARCHING.png) | 未発見・照合を継続 |
+| [A_M-REPORT-DETAIL.png](screens/A_M-REPORT-DETAIL.png) | 紛失届の内容とメール連絡（照合）（※） |
 | [A_M-HANDOVER.png](screens/A_M-HANDOVER.png) | 通常の受渡記録 |
 | [A_M-RECEIPT.png](screens/A_M-RECEIPT.png) | 受渡記録 / 伏せ字 |
 | [A_M-REVEAL.png](screens/A_M-REVEAL.png) | 受渡記録 / 個人情報表示 |

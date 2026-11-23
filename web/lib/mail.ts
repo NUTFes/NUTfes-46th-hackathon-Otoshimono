@@ -79,8 +79,15 @@ async function send(to: string, build: (origin: string) => Message): Promise<Mai
     });
     return { ok: true };
   } catch (error) {
-    // 宛先（来場者のメールアドレス）はログに残さない
-    console.error("メールを送れませんでした:", error);
+    // 宛先（来場者のメールアドレス）はログに残さない。エラーの文や SMTP の応答、拒否された宛先の一覧にも
+    // アドレスが入るので、エラーの種類だけを記録する
+    const { name, code, responseCode, command } = (error ?? {}) as {
+      name?: string;
+      code?: string;
+      responseCode?: number;
+      command?: string;
+    };
+    console.error("メールを送れませんでした:", { name, code, responseCode, command });
     return { ok: false, error: "メールを送れませんでした" };
   }
 }

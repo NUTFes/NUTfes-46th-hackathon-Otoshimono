@@ -35,7 +35,10 @@ async function loadMigrations() {
       );
     }
     const sql = await readFile(path.join(MIGRATIONS_DIR, name), "utf8");
-    const checksum = createHash("sha256").update(sql).digest("hex");
+    // Windows の git が改行を CRLF に変えても同じファイルとみなすため、LF にそろえてから計算する
+    const checksum = createHash("sha256")
+      .update(sql.replace(/\r\n/g, "\n"))
+      .digest("hex");
     byVersion.set(version, { version, name, sql, checksum });
   }
   return [...byVersion.values()];

@@ -8,6 +8,8 @@ import { describeColor, validateLostReport } from "@/lib/lost-reports";
 import { clearLostReportDraft, useLostReportDraft } from "../draft";
 import styles from "./page.module.css";
 
+const REVIEW_PATH = "/lost/review";
+
 type Submission =
   | { state: "idle" }
   | { state: "sending" }
@@ -71,7 +73,9 @@ export function LostReportReview() {
       // 先に done にしてから下書きを消す（下書きが消えたことで入力画面へ戻されないように）
       setSubmission({ state: "done", reportNumber: body.reportNumber, token: body.token });
       clearLostReportDraft(requestId);
-      router.replace(`/lost/${body.token}`);
+      // 応答を待つあいだに「戻る」などで確認画面を離れていたら、移動しない
+      // （入力画面で書き足している途中の内容を、状況ページへの移動で失わないように）
+      if (window.location.pathname === REVIEW_PATH) router.replace(`/lost/${body.token}`);
     } catch {
       setSubmission({
         state: "failed",

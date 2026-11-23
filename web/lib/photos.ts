@@ -4,6 +4,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { PoolClient } from "pg";
 import sharp from "sharp";
 import { db } from "./db";
 
@@ -102,12 +103,15 @@ export async function readPhotoBody(request: Request): Promise<Uint8Array | null
  * 拾得物の写真（kind ごとに1枚）を差し替える。物の状態が statuses のどれでもなければ何もせず null。
  * 先に DB へつないでからファイルを書き、失敗したら書いたファイルを消す（DB に紐づかないファイルを残さない）。
  * 古いファイルはコミットの後に消す。
+ * alsoUpdate を渡すと、写真の差し替えと同じトランザクションの中で呼ぶ（登録情報も一緒に保存するときなど）。
+ * そこで失敗すれば、写真も元のまま残る。
  */
 export async function replaceItemPhoto(
   itemId: string,
   kind: "drop" | "register",
   statuses: readonly string[],
   photo: Uint8Array,
+  alsoUpdate?: (client: PoolClient) => Promise<void>,
 ): Promise<{ id: string } | null> {
   const client = await db.connect();
   let saved: { id: string; fileKey: string } | null = null;
@@ -133,6 +137,7 @@ export async function replaceItemPhoto(
       "INSERT INTO item_photos (id, item_id, kind, file_key, content_type) VALUES ($1, $2, $3, $4, $5)",
       [saved.id, itemId, kind, saved.fileKey, PHOTO_CONTENT_TYPE],
     );
+    if (alsoUpdate) await alsoUpdate(client);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});

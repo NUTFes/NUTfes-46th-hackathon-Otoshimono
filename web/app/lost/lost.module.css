@@ -1,16 +1,16 @@
-/* 紛失届の画面（V-LOST、V-REVIEW）。値は docs/design/DESIGN.md。
-   共通の UI 部品（#8）ができたら置き換える。 */
+/* 紛失届の画面（V-LOST、V-REVIEW）。値は web/app/globals.css の変数を使う。
+   共通の UI 部品（web/components/ui）への置き換えは別の PR で行う。 */
 
 .page {
-  --primary: #254b3f;
-  --on-primary: #ffffff;
-  --text: #1e1e1e;
-  --text-muted: #757575;
-  --surface: #ffffff;
-  --surface-subtle: #f5f5f5;
-  --border: #d9d9d9;
-  --notice-bg: #f8f2e7;
-  --notice-text: #805c24;
+  --primary: var(--color-primary);
+  --on-primary: var(--color-on-primary);
+  --text: var(--color-text);
+  --text-muted: var(--color-text-muted);
+  --surface: var(--color-surface);
+  --surface-subtle: var(--color-surface-subtle);
+  --border: var(--color-border);
+  --notice-bg: var(--color-notice-bg);
+  --notice-text: var(--color-notice-text);
 
   box-sizing: border-box;
   max-width: 390px;
@@ -19,7 +19,7 @@
   padding: 24px 24px 32px;
   background: var(--surface);
   color: var(--text);
-  font-family: "Noto Sans JP", sans-serif;
+  font-family: var(--font-sans);
 }
 
 .page *,

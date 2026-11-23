@@ -54,6 +54,19 @@ export const MAX_LENGTH: Record<LostReportField, number> = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** 送り直しで二重に登録しないために、画面が届け出ごとに作る ID（UUID）か。 */
+export function isRequestId(value: unknown): value is string {
+  return typeof value === "string" && UUID_PATTERN.test(value);
+}
+
+/** 2つの入力が同じ内容か（前後の空白は無視する）。 */
+export function sameLostReportInput(a: LostReportInput, b: LostReportInput): boolean {
+  const x = toLostReportInput(a);
+  const y = toLostReportInput(b);
+  return (Object.keys(x) as LostReportField[]).every((field) => x[field] === y[field]);
+}
 
 /** どんな値が来ても、入力欄の形（前後の空白を除いた文字列）にそろえる。 */
 export function toLostReportInput(raw: unknown): LostReportInput {

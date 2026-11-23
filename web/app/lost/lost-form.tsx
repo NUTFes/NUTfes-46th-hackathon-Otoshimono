@@ -17,8 +17,14 @@ import styles from "./lost.module.css";
 
 export function LostReportForm() {
   const draft = useLostReportDraft();
-  // 確認画面から「修正する」で戻ったときは、下書きを読んでから入力欄を作り直す
-  return <Form key={draft ? "draft" : "empty"} initial={draft ?? EMPTY_LOST_REPORT_INPUT} />;
+  // 確認画面から「修正する」で戻ったときは、ブラウザーで下書きを読んだ時点で一度だけ入力欄を作り直す。
+  // そのあとに下書きが消えても（送信の完了など）作り直さないので、入力中の内容は消えない
+  return (
+    <Form
+      key={draft === undefined ? "server" : "client"}
+      initial={draft?.input ?? EMPTY_LOST_REPORT_INPUT}
+    />
+  );
 }
 
 function Form({ initial }: { initial: LostReportInput }) {

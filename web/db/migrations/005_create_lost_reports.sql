@@ -8,6 +8,8 @@ CREATE TABLE lost_reports (
                    ) STORED UNIQUE,
   -- 状況ページ（/lost/[token]）を届け出た本人だけが開けるようにするための推測できない値
   token            text        NOT NULL UNIQUE,
+  -- 画面が届け出ごとに作る ID。通信が切れて送り直されても、同じ届け出を二重に登録しない
+  request_id       uuid        NOT NULL UNIQUE,
   -- 確認状況。値の意味は docs/spec/routes.md の表
   status           text        NOT NULL DEFAULT 'pending'
                      CHECK (status IN ('pending', 'not_found_notified', 'found_notified')),

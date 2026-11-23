@@ -19,7 +19,7 @@ export function LostReportReview() {
   const draft = useLostReportDraft();
   const [submission, setSubmission] = useState<Submission>({ state: "idle" });
 
-  const result = draft ? validateLostReport(draft) : null;
+  const result = draft ? validateLostReport(draft.input) : null;
   const report = result?.ok ? result.value : null;
   // 下書きがない、または入力に不備があるときは入力画面に戻す（受付完了の表示中は除く）
   const shouldGoBack = draft !== undefined && report === null && submission.state !== "done";
@@ -41,10 +41,13 @@ export function LostReportReview() {
     );
   }
 
-  if (report === null) {
+  if (report === null || !draft) {
     // 読み込み中、または入力画面へ戻る途中
     return <h1 className={styles.heading}>登録内容の確認</h1>;
   }
+
+  // 送信する下書き。応答を待つあいだに下書きが変わっても、この ID のものだけを片付ける
+  const { input, requestId } = draft;
 
   async function submit() {
     setSubmission({ state: "sending" });
@@ -52,7 +55,8 @@ export function LostReportReview() {
       const response = await fetch("/api/lost-reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        // 送り直しても同じ requestId を送るので、前回が受け付け済みなら同じ受付番号が返る
+        body: JSON.stringify({ ...input, requestId }),
       });
       const body = (await response.json().catch(() => ({}))) as {
         reportNumber?: string;
@@ -65,7 +69,7 @@ export function LostReportReview() {
         });
         return;
       }
-      clearLostReportDraft();
+      clearLostReportDraft(requestId);
       setSubmission({ state: "done", reportNumber: body.reportNumber });
     } catch {
       setSubmission({
@@ -124,9 +128,16 @@ export function LostReportReview() {
         >
           {sending ? "登録しています…" : "この内容で登録する"}
         </button>
-        <Link href="/lost" className={styles.secondary}>
-          入力内容を修正する
-        </Link>
+        {sending ? (
+          // 送信中は修正に戻れないようにする（戻って直した内容と、送信中の届け出が食い違うため）
+          <button type="button" className={styles.secondary} disabled>
+            入力内容を修正する
+          </button>
+        ) : (
+          <Link href="/lost" className={styles.secondary}>
+            入力内容を修正する
+          </Link>
+        )}
       </div>
     </>
   );

@@ -14,7 +14,8 @@ const SCAN_INTERVAL_MS = 300;
 const RETRY_SAME_CODE_MS = 3000;
 
 type Detector = { detect(source: HTMLVideoElement): Promise<{ rawValue: string }[]> };
-type Step = "starting" | "live" | "unavailable" | "collecting";
+// idle: 「QRを読み取る」を押す前（カメラは止めておく）
+type Step = "idle" | "starting" | "live" | "unavailable" | "collecting";
 
 /** ブラウザーに QR を読む機能があればそれを使い、無ければ（iOS Safari など）zxing-wasm で読む。 */
 async function createDetector(): Promise<Detector> {
@@ -39,11 +40,13 @@ function boxCodeFrom(rawValue: string): string | null {
 export function Scanner() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [step, setStep] = useState<Step>("starting");
+  const [step, setStep] = useState<Step>("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const reading = step === "starting" || step === "live" || step === "collecting";
 
-  // 画面を表示している間だけカメラを動かし、読み取りを続ける（離れたら止める。戻ってきたら動かし直す）
+  // 「QRを読み取る」を押してから、画面を離れるまでカメラを動かして読み取りを続ける（離れたら止め、押す前に戻す）
   useEffect(() => {
+    if (!reading) return;
     let cancelled = false;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -115,11 +118,11 @@ export function Scanner() {
       cancelled = true;
       clearTimeout(timer);
       stream?.getTracks().forEach((track) => track.stop());
-      // 戻ってきたときは、カメラが動くまで待つ
-      setStep("starting");
+      // 戻ってきたときは、もう一度「QRを読み取る」を押してもらう
+      setStep((current) => (current === "unavailable" ? current : "idle"));
       setMessage(null);
     };
-  }, [router]);
+  }, [reading, router]);
 
   if (step === "unavailable") {
     return (
@@ -140,8 +143,8 @@ export function Scanner() {
           <Notice tone="warning" title={message} />
         </div>
       )}
-      <Button disabled>
-        {step === "starting" ? "カメラを準備しています…" : step === "collecting" ? "回収を記録しています…" : "QRを読み取っています…"}
+      <Button onClick={() => setStep("starting")} disabled={reading}>
+        {step === "idle" ? "QRを読み取る" : step === "collecting" ? "回収を記録しています…" : "読み取っています…"}
       </Button>
     </>
   );

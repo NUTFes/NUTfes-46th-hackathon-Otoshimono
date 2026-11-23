@@ -56,4 +56,3 @@ export function summarize(record: HandoverRecord): string | undefined {
   return [record.managementNumber, record.itemName].filter(Boolean).join(" / ") || undefined;
 }
 
-export { formatDateTime } from "@/lib/format";

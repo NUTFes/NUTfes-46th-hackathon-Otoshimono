@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { ButtonLink, DefinitionList, Notice, Page, PageHeading, StaffHeader } from "@/components/ui";
 import { isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
+import { formatDateTime } from "@/lib/format";
 import { isItemId } from "@/lib/handovers";
 import { describeCategory } from "@/lib/item-registration";
 import { itemStatusLabel } from "@/lib/item-status";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime } from "../data";
 import { UndoForm } from "./undo-form";
 
 export const metadata: Metadata = {

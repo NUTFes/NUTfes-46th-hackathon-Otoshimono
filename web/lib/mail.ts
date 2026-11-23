@@ -212,7 +212,7 @@ function escapeHtml(value: string): string {
 }
 
 function layout(title: string, blocks: string[]): string {
-  const rows = blocks.map((block) => `<tr><td style="padding-top:24px;">${block}</td></tr>`).join("");
+  const rows = blocks.map((block) => `<tr><td style="padding-top:20px;">${block}</td></tr>`).join("");
   return `<!doctype html>
 <html lang="ja">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title></head>
@@ -223,7 +223,7 @@ function layout(title: string, blocks: string[]): string {
 <tr><td style="padding:32px 32px 32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="font-size:13px;line-height:20px;color:${COLOR.muted};">技大祭 落とし物窓口</td></tr>
-<tr><td style="padding-top:24px;"><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:500;">${escapeHtml(title)}</h1></td></tr>
+<tr><td style="padding-top:20px;"><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:500;">${escapeHtml(title)}</h1></td></tr>
 ${rows}
 </table>
 </td></tr>
@@ -240,7 +240,7 @@ function paragraph(text: string, { muted = false } = {}): string {
 
 function definitionRow(label: string, value: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td width="116" valign="top" style="font-size:14px;line-height:22px;color:${COLOR.muted};">${escapeHtml(label)}</td>
+<td width="116" valign="top" style="font-size:13px;line-height:20px;color:${COLOR.muted};">${escapeHtml(label)}</td>
 <td valign="top" style="font-size:14px;line-height:22px;">${escapeHtml(value)}</td>
 </tr></table>`;
 }

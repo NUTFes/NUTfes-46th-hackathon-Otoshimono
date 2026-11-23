@@ -96,22 +96,27 @@ export function Scanner() {
       if (!cancelled) timer = setTimeout(() => void scan(), SCAN_INTERVAL_MS);
     }
 
-    const request = navigator.mediaDevices?.getUserMedia
-      ? navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
-      : Promise.reject(new Error("カメラに対応していません"));
+    // カメラは取得した時点で後片付けの対象にする（読み取りの準備に失敗しても、画面を離れても必ず止める）
+    const request = (
+      navigator.mediaDevices?.getUserMedia
+        ? navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
+        : Promise.reject(new Error("カメラに対応していません"))
+    ).then((started) => {
+      stream = started;
+      if (cancelled) started.getTracks().forEach((track) => track.stop());
+      return started;
+    });
     Promise.all([request, createDetector()])
       .then(([started, created]) => {
-        if (cancelled) {
-          started.getTracks().forEach((track) => track.stop());
-          return;
-        }
-        stream = started;
+        if (cancelled) return;
         detector = created;
-        if (videoRef.current) videoRef.current.srcObject = started;
+        if (video) video.srcObject = started;
         setStep("live");
         scanSoon();
       })
       .catch(() => {
+        // カメラか読み取りのどちらかの準備に失敗したら、取得済みのカメラも止める
+        stream?.getTracks().forEach((track) => track.stop());
         if (!cancelled) setStep("unavailable");
       });
 

@@ -94,7 +94,13 @@ export function UnknownForm({
           </Select>
         </Field>
       )}
-      <Field label="理由" htmlFor="unknown-reason" required error={errors.reason} hint={`理由：${UNKNOWN_REASONS.join(" / ")}`}>
+      <Field
+        label="理由"
+        htmlFor="unknown-reason"
+        required
+        error={errors.reason}
+        hint={warning ? `理由：${UNKNOWN_REASONS.join(" / ")}` : undefined}
+      >
         <Select
           id="unknown-reason"
           value={reason}

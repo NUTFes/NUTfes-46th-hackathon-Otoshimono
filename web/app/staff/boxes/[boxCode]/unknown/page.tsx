@@ -84,19 +84,28 @@ async function BoxUnknown({ params }: Pick<PageProps<"/staff/boxes/[boxCode]/unk
                   ]}
                 />
                 <p className={styles.muted}>見つかった場合は、元の{itemStatusLabel(row.previous_status ?? "")}に戻せます。</p>
-                <RestoreButton itemId={row.id} label="見つかった通知を元に戻す" />
+                <div className={styles.actions}>
+                  <RestoreButton itemId={row.id} label="見つかった通知を元に戻す" />
+                  {row === unknowns[unknowns.length - 1] && (
+                    <ButtonLink href="/staff/boxes" variant="secondary">
+                      BOX一覧に戻る
+                    </ButtonLink>
+                  )}
+                </div>
               </Fragment>
             ))}
-            <ButtonLink href="/staff/boxes" variant="secondary">
-              BOX一覧に戻る
-            </ButtonLink>
           </>
         )}
         {targets.length > 0 ? (
           <>
             {unknowns.length > 0 && <h2 className={styles.sectionTitle}>ほかの通知を不明にする</h2>}
             <p className={styles.muted}>箱の中と周囲を確認し、物が見当たらない通知を1件ずつ記録します。</p>
-            <UnknownForm targets={targets.map((row) => ({ id: row.id, label: describe(row) }))} backHref={boxHref} />
+            {/* 不明にした通知は選択肢から消えるので、選択肢が変わったら選んだ通知も先頭に戻す */}
+            <UnknownForm
+              key={targets.map((row) => row.id).join()}
+              targets={targets.map((row) => ({ id: row.id, label: describe(row) }))}
+              backHref={boxHref}
+            />
           </>
         ) : (
           <p className={styles.muted}>不明にできる通知（仮登録済・回収済）はありません。</p>

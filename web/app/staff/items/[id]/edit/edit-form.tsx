@@ -33,8 +33,6 @@ export function EditForm({
   const [errors, setErrors] = useState<RegistrationErrors>({});
   // 撮り直した写真。「変更を保存する」まで送らない（保存せずに戻れば写真も変わらない）
   const [newPhoto, setNewPhoto] = useState<{ blob: Blob; url: string } | null>(null);
-  // 保存済みの写真（写真だけ保存できて登録情報の保存が失敗したときも、保存した写真を出す）
-  const [savedPhotoId, setSavedPhotoId] = useState(photoId);
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -79,30 +77,17 @@ export function EditForm({
     setSending(true);
     setFailure(null);
     try {
+      // 写真も変えるときは、写真と登録情報を1回の送信でまとめて保存する（どちらかだけ保存されることはない）
+      let request: RequestInit;
       if (newPhoto) {
-        // 本登録済の物の写真の変更として送る（状態が変わっていたら差し替えない）
-        const response = await fetch(`/api/staff/items/${itemId}/photos?status=registered`, {
-          method: "POST",
-          headers: { "Content-Type": "image/jpeg" },
-          body: newPhoto.blob,
-        });
-        if (response.status === 401) return router.replace("/staff/login");
-        if (!response.ok) {
-          const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
-          setFailure(body.error?.message ?? "写真を保存できませんでした。もう一度お試しください。");
-          setSending(false);
-          return;
-        }
-        // 写真は保存できたので、登録情報だけ失敗しても写真を送り直さない
-        const saved = (await response.json().catch(() => ({}))) as { photoId?: string };
-        if (saved.photoId) setSavedPhotoId(saved.photoId);
-        setNewPhoto(null);
+        const form = new FormData();
+        form.append("fields", JSON.stringify(input));
+        form.append("photo", newPhoto.blob, "photo.jpg");
+        request = { method: "PATCH", body: form };
+      } else {
+        request = { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) };
       }
-      const response = await fetch(`/api/staff/items/${itemId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
+      const response = await fetch(`/api/staff/items/${itemId}`, request);
       if (response.status === 401) return router.replace("/staff/login");
       if (response.ok) {
         // この画面の中身も読み直しておく（戻ってきたときに保存した内容が出るように）
@@ -153,7 +138,7 @@ export function EditForm({
     );
   }
 
-  const photoSrc = newPhoto?.url ?? (savedPhotoId ? `/api/photos/${savedPhotoId}` : null);
+  const photoSrc = newPhoto?.url ?? (photoId ? `/api/photos/${photoId}` : null);
   return (
     <>
       <PageHeading title="登録情報を編集" description={summary} />

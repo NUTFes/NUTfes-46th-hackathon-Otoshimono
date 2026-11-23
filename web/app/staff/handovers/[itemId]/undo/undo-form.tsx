@@ -6,7 +6,16 @@ import { Button, ButtonLink, Notice } from "@/components/ui";
 import styles from "../page.module.css";
 
 /** 「受渡を取り消して戻す」と「取り消さずに戻る」。 */
-export function UndoForm({ itemId, cancelHref }: { itemId: string; cancelHref: string }) {
+export function UndoForm({
+  itemId,
+  handoverId,
+  cancelHref,
+}: {
+  itemId: string;
+  /** 確認画面を開いた時点で有効だった受渡記録。これがまだ有効なときだけ取り消す */
+  handoverId: string;
+  cancelHref: string;
+}) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -20,7 +29,11 @@ export function UndoForm({ itemId, cancelHref }: { itemId: string; cancelHref: s
     setSending(true);
     setFailure(null);
     try {
-      const response = await fetch(`/api/staff/items/${itemId}/handover`, { method: "DELETE" });
+      const response = await fetch(`/api/staff/items/${itemId}/handover`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handoverId }),
+      });
       // 応答を待つあいだに画面を離れていたら、遅れて届いた応答で画面を切り替えない
       const stillHere = window.location.pathname === `/staff/handovers/${itemId}/undo`;
       if (response.ok) {

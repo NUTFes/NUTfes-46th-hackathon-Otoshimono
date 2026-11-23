@@ -45,6 +45,11 @@ export function isItemId(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
 }
 
+/** handovers.id（bigint の連番）。pg は bigint を文字列で返すので、文字列で扱う。 */
+export function isHandoverId(value: unknown): value is string {
+  return typeof value === "string" && /^[1-9][0-9]{0,18}$/.test(value);
+}
+
 function text(source: Record<string, unknown>, field: string): string {
   const value = source[field];
   return typeof value === "string" ? value.trim() : "";

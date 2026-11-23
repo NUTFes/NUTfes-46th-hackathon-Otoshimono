@@ -6,6 +6,7 @@ import { categoryLabel, isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
 import { isItemId } from "@/lib/handovers";
 import { requireStaff } from "@/lib/staff-auth";
+import { formatDateTime } from "../data";
 import { UndoForm } from "./undo-form";
 
 export const metadata: Metadata = {
@@ -34,14 +35,25 @@ async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">
   const { itemId } = await params;
   if (!isItemId(itemId)) notFound();
 
+  // 取り消す対象は、画面を開いた時点で有効な受渡記録（取り消すときにその ID を API に渡す）
   const { rows } = await db.query<{
     status: string;
     management_number: string | null;
     category: string | null;
     category_note: string | null;
-  }>("SELECT status, management_number, category, category_note FROM items WHERE id = $1", [itemId]);
+    handover_id: string | null;
+    handed_over_at: Date | null;
+  }>(
+    `SELECT i.status, i.management_number, i.category, i.category_note,
+            h.id AS handover_id, h.handed_over_at
+       FROM items i
+       LEFT JOIN handovers h ON h.item_id = i.id AND h.cancelled_at IS NULL
+      WHERE i.id = $1`,
+    [itemId],
+  );
   const item = rows[0];
   if (!item) notFound();
+  const canUndo = item.status === "handed_over" && item.handover_id !== null;
 
   const receiptHref = `/staff/handovers/${itemId}`;
   const name =
@@ -56,7 +68,7 @@ async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">
       <StaffHeader backHref={receiptHref} />
       <Page>
         <PageHeading title="受渡を取り消しますか？" />
-        {item.status === "handed_over" ? (
+        {canUndo ? (
           <Notice title="受渡済から本登録済に戻します" tone="warning">
             管理番号は {item.management_number ?? "—"} のままです。物品が手元にあることを確認してください。
           </Notice>
@@ -71,10 +83,14 @@ async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">
             { label: "カテゴリ", value: name },
             { label: "管理番号", value: item.management_number ?? "—" },
             { label: "現在の状態", value: STATUS_LABELS[item.status] ?? item.status },
+            // どの受渡を取り消すのかを見て確かめられるように
+            ...(canUndo && item.handed_over_at
+              ? [{ label: "受渡日時", value: formatDateTime(item.handed_over_at) }]
+              : []),
           ]}
         />
-        {item.status === "handed_over" ? (
-          <UndoForm itemId={itemId} cancelHref={receiptHref} />
+        {canUndo && item.handover_id ? (
+          <UndoForm itemId={itemId} handoverId={item.handover_id} cancelHref={receiptHref} />
         ) : (
           <ButtonLink href={`/staff/items/${itemId}`} variant="secondary">
             物品の詳細へ戻る

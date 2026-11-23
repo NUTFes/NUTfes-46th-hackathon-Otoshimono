@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ButtonLink, DefinitionList, Page, PageHeading, StaffHeader } from "@/components/ui";
+import { formatDateTime } from "@/lib/format";
 import { isItemId } from "@/lib/handovers";
 import { maskEmail, maskName, maskPhone } from "@/lib/mask";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime, getLatestHandover, summarize } from "./data";
+import { getLatestHandover, summarize } from "./data";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {

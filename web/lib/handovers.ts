@@ -45,9 +45,13 @@ export function isItemId(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
 }
 
-/** handovers.id（bigint の連番）。pg は bigint を文字列で返すので、文字列で扱う。 */
+const BIGINT_MAX = "9223372036854775807";
+
+/** handovers.id（bigint の連番）。pg は bigint を文字列で返すので、文字列で扱う。bigint の上限を超える値は弾く。 */
 export function isHandoverId(value: unknown): value is string {
-  return typeof value === "string" && /^[1-9][0-9]{0,18}$/.test(value);
+  if (typeof value !== "string" || !/^[1-9][0-9]{0,18}$/.test(value)) return false;
+  // 19桁のときだけ上限と比べる（同じ桁数なら文字列の大小が数の大小と同じ）
+  return value.length < BIGINT_MAX.length || value <= BIGINT_MAX;
 }
 
 function text(source: Record<string, unknown>, field: string): string {

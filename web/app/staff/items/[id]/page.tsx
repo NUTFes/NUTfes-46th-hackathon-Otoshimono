@@ -10,7 +10,7 @@ import { describeCategory, describeItemColor } from "@/lib/item-registration";
 import { itemStatusLabel } from "@/lib/item-status";
 import { foundNoticesFor } from "@/lib/report-notices";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime } from "../format";
+import { formatDateTime } from "@/lib/format";
 import { FoundNotices } from "./found-notices";
 import styles from "./detail.module.css";
 

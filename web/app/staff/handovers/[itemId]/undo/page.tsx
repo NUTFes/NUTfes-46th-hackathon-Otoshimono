@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ButtonLink, DefinitionList, Notice, Page, PageHeading, StaffHeader } from "@/components/ui";
-import { categoryLabel, isCategoryCode } from "@/lib/categories";
+import { isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
+import { formatDateTime } from "@/lib/format";
 import { isItemId } from "@/lib/handovers";
+import { describeCategory } from "@/lib/item-registration";
+import { itemStatusLabel } from "@/lib/item-status";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime } from "../data";
 import { UndoForm } from "./undo-form";
 
 export const metadata: Metadata = {
@@ -21,14 +23,6 @@ export default function HandoverUndoPage(props: PageProps<"/staff/handovers/[ite
     </Suspense>
   );
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  provisional: "仮登録済",
-  collected: "回収済",
-  registered: "本登録済",
-  handed_over: "受渡済",
-  unknown: "不明",
-};
 
 async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">, "params">) {
   await requireStaff();
@@ -56,12 +50,7 @@ async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">
   const canUndo = item.status === "handed_over" && item.handover_id !== null;
 
   const receiptHref = `/staff/handovers/${itemId}`;
-  const name =
-    item.category === "other" && item.category_note
-      ? item.category_note
-      : item.category && isCategoryCode(item.category)
-        ? categoryLabel(item.category)
-        : "—";
+  const name = item.category && isCategoryCode(item.category) ? describeCategory(item.category, item.category_note) : "—";
 
   return (
     <>
@@ -82,7 +71,7 @@ async function Undo({ params }: Pick<PageProps<"/staff/handovers/[itemId]/undo">
           items={[
             { label: "カテゴリ", value: name },
             { label: "管理番号", value: item.management_number ?? "—" },
-            { label: "現在の状態", value: STATUS_LABELS[item.status] ?? item.status },
+            { label: "現在の状態", value: itemStatusLabel(item.status) },
             // どの受渡を取り消すのかを見て確かめられるように
             ...(canUndo && item.handed_over_at
               ? [{ label: "受渡日時", value: formatDateTime(item.handed_over_at) }]

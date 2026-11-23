@@ -11,12 +11,12 @@ export async function POST(_request: Request, ctx: RouteContext<"/api/staff/repo
   const { id } = await ctx.params;
   if (!isReportId(id)) return Response.json({ error: { message: "紛失届が見つかりません。" } }, { status: 404 });
 
-  return withLockedReport(id, async (report, client) => {
+  return withLockedReport(id, async (report, client, progress) => {
     if (report.status !== "pending") {
       return { ok: false, status: 409, message: "この紛失届には、すでに連絡しています。" };
     }
 
-    const failed = mailFailed(await sendNotFound({ to: report.email, token: report.token }));
+    const failed = mailFailed(await sendNotFound({ to: report.email, token: report.token }), progress);
     if (failed) return failed;
 
     await client.query("UPDATE lost_reports SET status = 'not_found_notified' WHERE id = $1", [report.id]);

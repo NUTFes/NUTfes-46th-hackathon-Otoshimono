@@ -24,7 +24,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/repor
     return Response.json({ error: { message: "送信内容を読み取れませんでした。" } }, { status: 400 });
   }
 
-  return withLockedReport(id, async (report, client) => {
+  return withLockedReport(id, async (report, client, progress) => {
     if (report.matched_item_id !== previousItemId) {
       return { ok: false, status: 409, message: "ほかの実行委員が先に連絡しました。画面を読み直してください。" };
     }
@@ -46,7 +46,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/repor
       managementNumber: item.management_number,
       storageLocation: item.storage_location,
     });
-    const failed = mailFailed(result);
+    const failed = mailFailed(result, progress);
     if (failed) return failed;
 
     await client.query(

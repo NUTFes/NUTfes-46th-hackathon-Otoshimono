@@ -33,6 +33,8 @@ export function EditForm({
   const [errors, setErrors] = useState<RegistrationErrors>({});
   // 撮り直した写真。「変更を保存する」まで送らない（保存せずに戻れば写真も変わらない）
   const [newPhoto, setNewPhoto] = useState<{ blob: Blob; url: string } | null>(null);
+  // 保存済みの写真（写真だけ保存できて登録情報の保存が失敗したときも、保存した写真を出す）
+  const [savedPhotoId, setSavedPhotoId] = useState(photoId);
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -66,6 +68,7 @@ export function EditForm({
   }
 
   async function save() {
+    setFailure(null);
     const result = validateRegistration(input);
     if (!result.ok) {
       setErrors(result.errors);
@@ -91,6 +94,8 @@ export function EditForm({
           return;
         }
         // 写真は保存できたので、登録情報だけ失敗しても写真を送り直さない
+        const saved = (await response.json().catch(() => ({}))) as { photoId?: string };
+        if (saved.photoId) setSavedPhotoId(saved.photoId);
         setNewPhoto(null);
       }
       const response = await fetch(`/api/staff/items/${itemId}`, {
@@ -148,7 +153,7 @@ export function EditForm({
     );
   }
 
-  const photoSrc = newPhoto?.url ?? (photoId ? `/api/photos/${photoId}` : null);
+  const photoSrc = newPhoto?.url ?? (savedPhotoId ? `/api/photos/${savedPhotoId}` : null);
   return (
     <>
       <PageHeading title="登録情報を編集" description={summary} />

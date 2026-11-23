@@ -30,6 +30,8 @@ type Item = {
   category: string | null;
   category_note: string | null;
   storage_location: string | null;
+  /** 受渡・取り消しで変わる。変わったらフォームを作り直す */
+  updated_at: string;
 };
 
 async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">, "params">) {
@@ -38,7 +40,7 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
   if (!isItemId(id)) notFound();
 
   const { rows } = await db.query<Item>(
-    `SELECT status, management_number, category, category_note, storage_location
+    `SELECT status, management_number, category, category_note, storage_location, updated_at::text AS updated_at
        FROM items WHERE id = $1`,
     [id],
   );
@@ -63,7 +65,9 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
             <FoundNotices reports={foundNotices} tone="warning">
               受け取りに来た人が届け出人本人か確かめてください。
             </FoundNotices>
-            <HandoverForm itemId={id} backHref={detailHref} />
+            {/* 離れた画面の入力は残る（cacheComponents）ので、受渡を取り消して記録し直すときは作り直し、
+                前に受け取った人の氏名・連絡先と確認のチェックを残さない。紛失届を見て戻っただけなら入力は残る */}
+            <HandoverForm key={item.updated_at} itemId={id} backHref={detailHref} />
           </>
         ) : item.status === "handed_over" ? (
           <>

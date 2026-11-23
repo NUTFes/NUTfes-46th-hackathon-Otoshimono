@@ -48,7 +48,7 @@ async function Pickup({ params }: Pick<PageProps<"/lost/[token]/pickup">, "param
   if (matched.item_status !== "registered") {
     return (
       <PageHeading
-        title="受け取りのご案内を確認しています"
+        title="ご案内を確認しています"
         description="お手数ですが、実行委員会の本部にお問い合わせください。"
       />
     );

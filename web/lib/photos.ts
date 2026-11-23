@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { db } from "./db";
 
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export const PHOTO_CONTENT_TYPE = "image/jpeg";
@@ -69,4 +70,77 @@ export async function deletePhotoFile(fileKey: string): Promise<void> {
   await unlink(filePath(fileKey)).catch((error) => {
     console.error("写真のファイルを消せませんでした", fileKey, error);
   });
+}
+
+/** 写真の本文を MAX_PHOTO_BYTES まで読む。超えたら読むのをやめて null（長さを付けずに分割して送られても止める）。 */
+export async function readPhotoBody(request: Request): Promise<Uint8Array | null> {
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_PHOTO_BYTES) return null;
+  if (!request.body) return new Uint8Array();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = request.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > MAX_PHOTO_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
+}
+
+/**
+ * 拾得物の写真（kind ごとに1枚）を差し替える。物の状態が statuses のどれでもなければ何もせず null。
+ * 先に DB へつないでからファイルを書き、失敗したら書いたファイルを消す（DB に紐づかないファイルを残さない）。
+ * 古いファイルはコミットの後に消す。
+ */
+export async function replaceItemPhoto(
+  itemId: string,
+  kind: "drop" | "register",
+  statuses: readonly string[],
+  photo: Uint8Array,
+): Promise<{ id: string } | null> {
+  const client = await db.connect();
+  let saved: { id: string; fileKey: string } | null = null;
+  let replaced: string[] = [];
+  try {
+    saved = await savePhotoFile(photo);
+    await client.query("BEGIN");
+    const item = await client.query("SELECT 1 FROM items WHERE id = $1 AND status = ANY($2) FOR UPDATE", [
+      itemId,
+      statuses,
+    ]);
+    if (item.rowCount === 0) {
+      await client.query("ROLLBACK");
+      await deletePhotoFile(saved.fileKey);
+      return null;
+    }
+    const old = await client.query<{ file_key: string }>(
+      "DELETE FROM item_photos WHERE item_id = $1 AND kind = $2 RETURNING file_key",
+      [itemId, kind],
+    );
+    replaced = old.rows.map((row) => row.file_key);
+    await client.query(
+      "INSERT INTO item_photos (id, item_id, kind, file_key, content_type) VALUES ($1, $2, $3, $4, $5)",
+      [saved.id, itemId, kind, saved.fileKey, PHOTO_CONTENT_TYPE],
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    if (saved) await deletePhotoFile(saved.fileKey);
+    throw error;
+  } finally {
+    client.release();
+  }
+  await Promise.all(replaced.map(deletePhotoFile));
+  return { id: saved.id };
 }

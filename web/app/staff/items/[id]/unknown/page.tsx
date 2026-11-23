@@ -7,9 +7,11 @@ import { db } from "@/lib/db";
 import { isUuid } from "@/lib/drops";
 import { describeCategory } from "@/lib/item-registration";
 import { itemStatusLabel } from "@/lib/item-status";
+import { foundNoticesFor } from "@/lib/report-notices";
 import { requireStaff } from "@/lib/staff-auth";
 import { UNKNOWN_FROM_STATUSES } from "@/lib/unknown";
 import { RestoreButton, UnknownForm } from "../../../unknown-actions";
+import { FoundNotices } from "../found-notices";
 import styles from "../detail.module.css";
 
 export const metadata: Metadata = {
@@ -84,11 +86,16 @@ async function ItemUnknown({ params }: Pick<PageProps<"/staff/items/[id]/unknown
     );
   }
 
+  // 受取案内を送った届け出人がいるなら、不明にする前に気づけるようにする
+  const foundNotices = item.status === "registered" ? await foundNoticesFor(id) : [];
+
   return (
     <>
       <StaffHeader backHref={detailHref} />
       <Page>
         <PageHeading title="物品を不明にする" description={summary} />
+        {/* 下のフォームに注意の枠があるので、こちらは通常の案内にする（注意の枠は1画面に1つまで） */}
+        <FoundNotices reports={foundNotices}>不明にする場合は、届け出人への連絡も検討してください。</FoundNotices>
         {UNKNOWN_FROM_STATUSES.some((status) => status === item.status) ? (
           <UnknownForm targets={[{ id, label: "", status: item.status }]} backHref={detailHref} warning />
         ) : (

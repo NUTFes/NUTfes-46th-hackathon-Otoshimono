@@ -69,3 +69,17 @@ export function mailFailed(result: MailResult, progress: NoticeProgress): Notice
   progress.mailSent = true;
   return null;
 }
+
+/**
+ * この物を照合して受取案内（E-FOUND）を送った紛失届。
+ * 受渡や不明の前に、届け出人がこの物を取りに来る予定だと実行委員に気づいてもらうために使う。
+ */
+export async function foundNoticesFor(itemId: string): Promise<{ id: string; report_number: string }[]> {
+  const { rows } = await db.query<{ id: string; report_number: string }>(
+    `SELECT id, report_number FROM lost_reports
+      WHERE matched_item_id = $1 AND status = 'found_notified'
+      ORDER BY id`,
+    [itemId],
+  );
+  return rows;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button, ButtonLink, Field, Notice, Select, Textarea } from "@/components/ui";
 import { UNKNOWN_NOTE_MAX_LENGTH, UNKNOWN_REASONS, validateUnknown, type UnknownErrors } from "@/lib/unknown";
 import styles from "./unknown-actions.module.css";
@@ -64,6 +64,8 @@ export function UnknownForm({
   const [errors, setErrors] = useState<UnknownErrors>({});
   const [failure, setFailure] = useState<Failure | null>(null);
   const [sending, setSending] = useState(false);
+  // 記録した後、画面を読み直し終わるまで（不明にした通知が選択肢から消えるまで）は押せないようにする
+  const [refreshing, startRefresh] = useTransition();
 
   // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
   useEffect(() => () => setSending(false), []);
@@ -85,7 +87,7 @@ export function UnknownForm({
     if (outcome === "login") return router.replace("/staff/login");
     if (outcome.ok) {
       setNote("");
-      router.refresh();
+      startRefresh(() => router.refresh());
     } else {
       if (outcome.errors) setErrors(outcome.errors);
       setFailure(outcome);
@@ -167,8 +169,8 @@ export function UnknownForm({
         />
       )}
       <div className={styles.actions}>
-        <Button onClick={submit} disabled={sending || !itemId}>
-          {sending ? "記録しています…" : "理由を記録して不明にする"}
+        <Button onClick={submit} disabled={sending || refreshing || !itemId}>
+          {sending || refreshing ? "記録しています…" : "理由を記録して不明にする"}
         </Button>
         <ButtonLink href={backHref} variant="secondary">
           戻る
@@ -196,6 +198,8 @@ export function RestoreButton({
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
+  // 戻した後、画面を読み直し終わるまでは押せないようにする
+  const [refreshing, startRefresh] = useTransition();
 
   useEffect(() => () => setSending(false), []);
 
@@ -218,7 +222,7 @@ export function RestoreButton({
       router.refresh();
       return;
     }
-    router.refresh();
+    startRefresh(() => router.refresh());
     setSending(false);
   }
 
@@ -233,8 +237,8 @@ export function RestoreButton({
           }}
         />
       )}
-      <Button onClick={restore} disabled={sending}>
-        {sending ? "戻しています…" : label}
+      <Button onClick={restore} disabled={sending || refreshing}>
+        {sending || refreshing ? "戻しています…" : label}
       </Button>
     </>
   );

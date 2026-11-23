@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useLayoutEffect, useState, type FormEvent } from "react";
 import { Button, ButtonLink, Checkbox, Field, Input, Notice, Textarea } from "@/components/ui";
 import {
   EMPTY_HANDOVER_INPUT,
@@ -21,6 +21,12 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
   // すでに受渡済だったときの、受渡記録の確認先
   const [receiptHref, setReceiptHref] = useState<string | null>(null);
   const formPath = `/staff/items/${itemId}/handover`;
+
+  // cacheComponents では、離れた画面の状態が残る（React の Activity で隠すだけ）。
+  // 成功・401 で画面を移ったとき、送信中に「戻る」で離れたときに「記録しています…」のまま残らないよう、
+  // 画面が隠れるときに送信中の表示を戻す。成功してから移るまでのあいだにボタンが元に戻らないよう、
+  // 送信の処理の最後では戻さない
+  useLayoutEffect(() => () => setSending(false), []);
 
   function update<K extends keyof HandoverInput>(field: K, value: HandoverInput[K]) {
     setInput((current) => ({ ...current, [field]: value }));

@@ -3,13 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button, ButtonLink, Notice } from "@/components/ui";
+import { captureVideo } from "@/lib/photo-capture";
 import { ensureDropUntilDone, sendPhoto, showDropPage } from "../drop-client";
 import styles from "./camera.module.css";
-
-// 何が写っているか分かれば十分なので、長い辺を 1280px に縮めて送る。
-// canvas に描き直すので、写真に埋め込まれた撮影場所（GPS）などの情報も消える。
-const MAX_EDGE = 1280;
-const JPEG_QUALITY = 0.8;
 
 type Step =
   | { kind: "starting" }
@@ -25,15 +21,6 @@ function CameraIcon() {
       <circle cx="12" cy="13" r="3.5" />
     </svg>
   );
-}
-
-function capture(video: HTMLVideoElement): Promise<Blob | null> {
-  const scale = Math.min(1, MAX_EDGE / Math.max(video.videoWidth, video.videoHeight));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(video.videoWidth * scale);
-  canvas.height = Math.round(video.videoHeight * scale);
-  canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY));
 }
 
 export function Camera({ boxCode }: { boxCode: string }) {
@@ -103,7 +90,7 @@ export function Camera({ boxCode }: { boxCode: string }) {
   async function takePhoto() {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return;
-    const photo = await capture(video);
+    const photo = await captureVideo(video);
     if (!photo) return;
     (video.srcObject as MediaStream | null)?.getTracks().forEach((track) => track.stop());
     setStep({ kind: "captured", photo, url: URL.createObjectURL(photo) });

@@ -4,11 +4,7 @@ import { Suspense } from "react";
 import { Page, PageHeading, StaffHeader, StaffTabs } from "@/components/ui";
 import { categoryLabel, isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
-import {
-  isLostReportStatus,
-  lostReportStatusLabel,
-  type LostReportStatus,
-} from "@/lib/lost-reports";
+import { isLostReportStatus, lostReportStatusLabel } from "@/lib/lost-reports";
 import { requireStaff } from "@/lib/staff-auth";
 import { StatusFilter } from "./status-filter";
 import styles from "./page.module.css";
@@ -90,7 +86,7 @@ function itemName(row: Row): string {
 /** 「確認待ち / 11/23 13:58」のような状況の行。確認待ちのときだけ受け付けた日時を添える。 */
 function describeStatus(row: Row): string {
   if (!isLostReportStatus(row.status)) return row.status;
-  const label = lostReportStatusLabel(row.status as LostReportStatus);
+  const label = lostReportStatusLabel(row.status);
   return row.status === "pending" ? `${label} / ${formatDateTime(row.created_at)}` : label;
 }
 

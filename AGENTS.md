@@ -4,8 +4,13 @@
 
 ## 仕様の参照先
 
-- 要件定義v2: https://nutfes-nutmeg.notion.site/20261118-v2-41c41f19206380b9817bee64986b49c6
-- 技術スタック: https://nutfes-nutmeg.notion.site/20261123-42041f1920638038aadfe3ba0994d7e5
+仕様とデザインの正本は `docs/`。Notion と Figma は移行元で、そちらは見なくてよい。
+
+- 要件定義v2: [docs/spec/requirements.md](docs/spec/requirements.md)
+- 技術スタック: [docs/spec/tech-stack.md](docs/spec/tech-stack.md)
+- デザイン: [docs/design/DESIGN.md](docs/design/DESIGN.md)（色・文字・余白・部品と、画面の一覧）。画面を作るときは、DESIGN.md と `docs/design/screens/` の該当する PNG を見て、並び順と文言を合わせる。
+- 画面と要件定義が食い違うときは、要件定義を優先する。
+- 段階C（ファイル名が `C_` の画面）は見本として置いているだけで、作らない。
 - 作業単位は GitHub の Issue。Issue の「完了条件」を満たすところまでを実装範囲とし、範囲外の機能は足さない。
 
 ## 開発の段階

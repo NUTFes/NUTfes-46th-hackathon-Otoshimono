@@ -2,6 +2,18 @@
 落とし物管理アプリ：落とし物を誰でも簡単に届けられ、見つけられる仕組み（46th NUTMEGハッカソン）
 チーム：Jarvis
 
+## 仕様とデザイン
+
+仕様とデザインの正本は `docs/` です。変更するときは `docs/` を直して PR を出します。
+
+| 内容 | 正本 | 移行元（以後は更新しない） |
+|---|---|---|
+| 要件定義v2 | [docs/spec/requirements.md](docs/spec/requirements.md) | [Notion](https://app.notion.com/p/nutfes-nutmeg/20261118-v2-41c41f19206380b9817bee64986b49c6) |
+| 技術スタック | [docs/spec/tech-stack.md](docs/spec/tech-stack.md) | [Notion](https://app.notion.com/p/nutfes-nutmeg/20261123-42041f1920638038aadfe3ba0994d7e5) |
+| デザイン | [docs/design/DESIGN.md](docs/design/DESIGN.md) と [docs/design/screens/](docs/design/screens/) | [Figma](https://www.figma.com/design/fEtGRXwFKjfE8rXuIMWKmu/)「要件定義v2反映最終版（本当の） / 2026.11.20」ページ |
+
+Figma で画面を変えたとき（モダンデザインへの切り替えを含む）は、同じ PR で `docs/design/screens/` の PNG と `DESIGN.md` を書き出し直します。
+
 ## 開発環境
 
 Docker Compose、Node.js 22、npm を使用します。以下のコマンドはリポジトリ直下から実行します。

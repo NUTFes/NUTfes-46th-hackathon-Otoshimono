@@ -1,0 +1,23 @@
+/* M-SCAN の読み取り枠（342 × 352、中に 220 × 220 の白い枠） */
+.viewfinder {
+  position: relative;
+  aspect-ratio: 342 / 352;
+  overflow: hidden;
+  background: var(--color-camera-preview);
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64%;
+  aspect-ratio: 1;
+  border: 2px solid var(--color-on-primary);
+  transform: translate(-50%, -50%);
+}

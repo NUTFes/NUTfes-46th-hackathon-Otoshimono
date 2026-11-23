@@ -1,0 +1,42 @@
+/* M-BOX と M-COLLECTED の配置。部品の見た目は web/components/ui。 */
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.photos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+/* 写真は 2 列（M-BOX の 165 × 132） */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 165 / 132;
+  object-fit: cover;
+  background: var(--color-photo-placeholder);
+}
+
+/* 縦に積むボタンの間は 8px（DESIGN.md の Layout） */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

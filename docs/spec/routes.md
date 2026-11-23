@@ -60,7 +60,7 @@
 | `/staff` | （画面なし。ログインを確かめて `/staff/boxes` へ移す） | — | 担当1 |
 | `/staff/boxes`、`/staff/boxes/[boxCode]` | M-BOXES、M-BOX | — | 担当1 |
 | `/staff/scan` → `/staff/boxes/[boxCode]/collected` | M-SCAN → M-COLLECTED | `POST /api/staff/boxes/[boxCode]/collect` | 担当1 |
-| `/staff/boxes/[boxCode]/unknown` | M-BOX-UNKNOWN、M-BOX-UNKNOWN-STATE | `POST`、`DELETE /api/staff/items/[id]/unknown` | 担当1 |
+| `/staff/boxes/[boxCode]/unknown` | M-BOX-UNKNOWN、M-BOX-UNKNOWN-STATE | `POST`、`DELETE /api/staff/items/[id]/unknown`（`POST` は画面で見た状態 `expectedStatus` が今と同じときだけ不明にする。`DELETE` は画面を作ったときの `updated_at` を DB の文字列のまま `expectedUpdatedAt` で送り、今と同じときだけ戻す。違えば 409） | 担当1 |
 | `/staff/items`（`?q=`、`?state=`） | M-ITEMS | — | 担当1 |
 | `/staff/items/queue` | M-QUEUE | — | 担当1 |
 | `/staff/items/[id]/register` | M-PHOTO → M-REGISTER → M-REVIEW | `POST /api/staff/items/[id]/photos`、`POST /api/staff/items/[id]/register`（管理番号を採番） | 担当1 |

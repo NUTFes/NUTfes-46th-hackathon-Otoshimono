@@ -40,3 +40,7 @@
   flex-direction: column;
   gap: var(--space-sm);
 }
+
+.multiline {
+  white-space: pre-wrap;
+}

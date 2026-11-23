@@ -51,7 +51,7 @@ async function ItemDetail({ params, searchParams }: PageProps<"/staff/items/[id]
   await requireStaff();
   const { id } = await params;
   if (!isUuid(id)) notFound();
-  const { saved } = await searchParams;
+  const { saved, restored } = await searchParams;
 
   const { rows } = await db.query<Item>(
     `SELECT i.status, i.management_number, i.category, i.category_note, i.reported_category,
@@ -80,6 +80,11 @@ async function ItemDetail({ params, searchParams }: PageProps<"/staff/items/[id]
       {saved === "1" && (
         <div role="status">
           <Notice title="変更を保存しました" />
+        </div>
+      )}
+      {restored === "1" && (
+        <div role="status">
+          <Notice title="元の状態に戻しました" />
         </div>
       )}
       {item.management_number && (

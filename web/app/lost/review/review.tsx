@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button, ButtonLink, DefinitionList, Notice, PageHeading } from "@/components/ui";
 import { categoryLabel, requiresDescription } from "@/lib/categories";
 import { describeColor, validateLostReport } from "@/lib/lost-reports";
 import { clearLostReportDraft, useLostReportDraft } from "../draft";
-import styles from "../lost.module.css";
+import styles from "./page.module.css";
 
 type Submission =
   | { state: "idle" }
@@ -31,19 +31,16 @@ export function LostReportReview() {
   if (submission.state === "done") {
     return (
       <>
-        <h1 className={styles.heading}>紛失届を受け付けました</h1>
-        <div className={styles.done}>
-          <p className={styles.doneLabel}>受付番号</p>
-          <p className={styles.doneNumber}>{submission.reportNumber}</p>
-        </div>
-        <p className={styles.notice}>実行委員が内容を確認し、メールでご連絡します。</p>
+        <PageHeading title="紛失届を受け付けました" />
+        <DefinitionList items={[{ label: "受付番号", value: submission.reportNumber }]} />
+        <Notice title="実行委員が内容を確認し、メールでご連絡します。" />
       </>
     );
   }
 
   if (report === null || !draft) {
     // 読み込み中、または入力画面へ戻る途中
-    return <h1 className={styles.heading}>登録内容の確認</h1>;
+    return <PageHeading title="登録内容の確認" />;
   }
 
   // 送信する下書き。応答を待つあいだに下書きが変わっても、この ID のものだけを片付ける
@@ -79,64 +76,44 @@ export function LostReportReview() {
     }
   }
 
-  const color = describeColor(report);
   const sending = submission.state === "sending";
+  const items = [
+    { label: "カテゴリ", value: categoryLabel(report.category) },
+    ...(requiresDescription(report.category)
+      ? [{ label: "なくした物", value: report.itemDescription }]
+      : []),
+    { label: "色", value: describeColor(report) ?? "—" },
+    { label: "特徴・備考", value: <span className={styles.multiline}>{report.features}</span> },
+    { label: "場所", value: report.lostPlace ?? "—" },
+    { label: "日時", value: report.lostTime ?? "—" },
+    { label: "メール", value: <span className={styles.breakAnywhere}>{report.email}</span> },
+  ];
 
   return (
     <>
-      <h1 className={styles.heading}>登録内容の確認</h1>
-      <section className={styles.card} aria-labelledby="review-title">
-        <h2 id="review-title" className={styles.cardTitle}>
-          紛失届
-        </h2>
-        <dl className={styles.list}>
-          <dt>カテゴリ</dt>
-          <dd>{categoryLabel(report.category)}</dd>
-          {requiresDescription(report.category) && (
-            <>
-              <dt>なくした物</dt>
-              <dd>{report.itemDescription}</dd>
-            </>
-          )}
-          <dt>色</dt>
-          <dd>{color ?? "—"}</dd>
-          <dt>特徴・備考</dt>
-          <dd>{report.features}</dd>
-          <dt>場所</dt>
-          <dd>{report.lostPlace ?? "—"}</dd>
-          <dt>日時</dt>
-          <dd>{report.lostTime ?? "—"}</dd>
-          <dt>メール</dt>
-          <dd>{report.email}</dd>
-        </dl>
-      </section>
-
-      <p className={styles.lead}>実行委員が内容を確認し、メールでご連絡します。</p>
+      <PageHeading title="登録内容の確認" />
+      <DefinitionList title="紛失届" items={items} />
+      <p className={styles.note}>実行委員が内容を確認し、メールでご連絡します。</p>
 
       {submission.state === "failed" && (
-        <p className={styles.alert} role="alert">
-          {submission.message}
-        </p>
+        <div role="alert">
+          <Notice tone="warning" title={submission.message} />
+        </div>
       )}
 
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.primary}
-          disabled={sending}
-          onClick={submit}
-        >
+        <Button onClick={submit} disabled={sending}>
           {sending ? "登録しています…" : "この内容で登録する"}
-        </button>
+        </Button>
         {sending ? (
           // 送信中は修正に戻れないようにする（戻って直した内容と、送信中の届け出が食い違うため）
-          <button type="button" className={styles.secondary} disabled>
+          <Button variant="secondary" disabled>
             入力内容を修正する
-          </button>
+          </Button>
         ) : (
-          <Link href="/lost" className={styles.secondary}>
+          <ButtonLink href="/lost" variant="secondary">
             入力内容を修正する
-          </Link>
+          </ButtonLink>
         )}
       </div>
     </>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { CATEGORIES, requiresDescription, isCategoryCode } from "@/lib/categories";
 import { COLORS, OTHER_COLOR } from "@/lib/colors";
 import {
@@ -13,7 +14,7 @@ import {
   type LostReportInput,
 } from "@/lib/lost-reports";
 import { saveLostReportDraft, useLostReportDraft } from "./draft";
-import styles from "./lost.module.css";
+import styles from "./page.module.css";
 
 export function LostReportForm() {
   const draft = useLostReportDraft();
@@ -53,170 +54,100 @@ function Form({ initial }: { initial: LostReportInput }) {
     router.push("/lost/review");
   }
 
-  function fieldProps(field: LostReportField) {
-    const error = errors[field];
+  /** 入力欄に渡す共通の属性。onChange で入力内容を更新する。 */
+  function control(field: LostReportField) {
     return {
       id: `lost-${field}`,
       name: field,
       value: input[field],
       maxLength: MAX_LENGTH[field],
-      "aria-invalid": error ? true : undefined,
-      "aria-describedby": error ? `lost-${field}-error` : undefined,
+      "aria-invalid": errors[field] ? true : undefined,
+      onChange: (event: { target: { value: string } }) => update(field, event.target.value),
     };
   }
-
-  function errorText(field: LostReportField) {
-    const error = errors[field];
-    return error ? (
-      <p id={`lost-${field}-error`} className={styles.error}>
-        {error}
-      </p>
-    ) : null;
-  }
-
-  const cls = (base: string, field: LostReportField) =>
-    errors[field] ? `${base} ${styles.invalid}` : base;
 
   return (
     // method="post": JavaScript が動く前に押されても、メールアドレスが URL に載らないようにする
     <form className={styles.form} method="post" onSubmit={handleSubmit} noValidate>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-category">
-          カテゴリ *
-        </label>
-        <select
-          {...fieldProps("category")}
-          className={cls(styles.select, "category")}
-          required
-          onChange={(event) => update("category", event.target.value)}
-        >
+      <Field label="カテゴリ" htmlFor="lost-category" required error={errors.category}>
+        <Select {...control("category")} required>
           <option value="">選択してください</option>
           {CATEGORIES.map((category) => (
             <option key={category.code} value={category.code}>
               {category.label}
             </option>
           ))}
-        </select>
-        {errorText("category")}
-      </div>
+        </Select>
+      </Field>
 
       {showItemDescription && (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="lost-itemDescription">
-            なくした物 *
-          </label>
-          <input
-            {...fieldProps("itemDescription")}
-            className={cls(styles.input, "itemDescription")}
-            type="text"
-            required
-            placeholder="例: 折りたたみの扇子"
-            onChange={(event) => update("itemDescription", event.target.value)}
-          />
-          {errorText("itemDescription")}
-        </div>
+        <Field
+          label="なくした物"
+          htmlFor="lost-itemDescription"
+          required
+          error={errors.itemDescription}
+        >
+          <Input {...control("itemDescription")} type="text" required placeholder="例: 折りたたみの扇子" />
+        </Field>
       )}
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-color">
-          色（任意）
-        </label>
-        <select
-          {...fieldProps("color")}
-          className={cls(styles.select, "color")}
-          onChange={(event) => update("color", event.target.value)}
-        >
+      <Field label="色（任意）" htmlFor="lost-color" error={errors.color}>
+        <Select {...control("color")}>
           <option value="">選択してください</option>
           {COLORS.map((color) => (
             <option key={color.code} value={color.code}>
               {color.label}
             </option>
           ))}
-        </select>
-        {errorText("color")}
-      </div>
+        </Select>
+      </Field>
 
       {showColorNote && (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="lost-colorNote">
-            その他の色（任意）
-          </label>
-          <input
-            {...fieldProps("colorNote")}
-            className={cls(styles.input, "colorNote")}
+        <Field label="その他の色（任意）" htmlFor="lost-colorNote" error={errors.colorNote}>
+          <Input
+            {...control("colorNote")}
             type="text"
             placeholder="選択肢にない色、2色以上の場合など"
-            onChange={(event) => update("colorNote", event.target.value)}
           />
-          {errorText("colorNote")}
-        </div>
+        </Field>
       )}
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-features">
-          特徴・備考 *
-        </label>
-        <textarea
-          {...fieldProps("features")}
-          className={cls(styles.textarea, "features")}
+      <Field label="特徴・備考" htmlFor="lost-features" required error={errors.features}>
+        <Textarea
+          {...control("features")}
           required
           rows={3}
           placeholder="形、柄、目印などをご記入ください。"
-          onChange={(event) => update("features", event.target.value)}
         />
-        {errorText("features")}
-      </div>
+      </Field>
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-lostPlace">
-          なくした場所（任意）
-        </label>
-        <input
-          {...fieldProps("lostPlace")}
-          className={cls(styles.input, "lostPlace")}
-          type="text"
-          placeholder="ステージ付近"
-          onChange={(event) => update("lostPlace", event.target.value)}
-        />
-        {errorText("lostPlace")}
-      </div>
+      <Field label="なくした場所（任意）" htmlFor="lost-lostPlace" error={errors.lostPlace}>
+        <Input {...control("lostPlace")} type="text" placeholder="ステージ付近" />
+      </Field>
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-lostTime">
-          おおよその日時（任意）
-        </label>
-        <input
-          {...fieldProps("lostTime")}
-          className={cls(styles.input, "lostTime")}
-          type="text"
-          placeholder="1日目 12:00〜13:00ごろ"
-          onChange={(event) => update("lostTime", event.target.value)}
-        />
-        {errorText("lostTime")}
-      </div>
+      <Field label="おおよその日時（任意）" htmlFor="lost-lostTime" error={errors.lostTime}>
+        <Input {...control("lostTime")} type="text" placeholder="1日目 12:00〜13:00ごろ" />
+      </Field>
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="lost-email">
-          連絡先メール *
-        </label>
-        <input
-          {...fieldProps("email")}
-          className={cls(styles.input, "email")}
+      <Field
+        label="連絡先メール"
+        htmlFor="lost-email"
+        required
+        hint="確認結果や、後から見つかった場合の連絡に使用します。"
+        error={errors.email}
+      >
+        <Input
+          {...control("email")}
           type="email"
           inputMode="email"
           autoComplete="email"
           required
           placeholder="sample@example.com"
-          onChange={(event) => update("email", event.target.value)}
         />
-        {errorText("email")}
-        <p className={styles.note}>確認結果や、後から見つかった場合の連絡に使用します。</p>
-      </div>
+      </Field>
 
       <div className={styles.actions}>
-        <button type="submit" className={styles.primary}>
-          入力内容を確認する
-        </button>
+        <Button type="submit">入力内容を確認する</Button>
       </div>
     </form>
   );

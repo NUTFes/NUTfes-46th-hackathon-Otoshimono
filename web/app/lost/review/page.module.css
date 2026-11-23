@@ -1,0 +1,21 @@
+/* V-REVIEW の配置。部品の見た目は web/components/ui。 */
+
+.note {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* 特徴・備考の改行をそのまま出す */
+.multiline {
+  white-space: pre-wrap;
+}
+
+/* 長いメールアドレスを枠の中で折り返す */
+.breakAnywhere {
+  overflow-wrap: anywhere;
+}

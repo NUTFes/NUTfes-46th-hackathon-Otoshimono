@@ -18,7 +18,7 @@ function readAnswers(form: HTMLFormElement): DropAnswers {
 export function DropForm({ boxCode }: { boxCode: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [sending, setSending] = useState<"none" | "camera" | "submit">("none");
+  const [sending, setSending] = useState(false);
 
   // 画面を開いた時点で仮登録を送り、届くまで送り続ける（ボタンを押さない人も記録する）
   // 画面を離れたら送り直しをやめる（showDropPage の後片付け）
@@ -28,14 +28,14 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     return () => {
       hide();
       // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
-      setSending("none");
+      setSending(false);
     };
   }, [boxCode]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const answers = readAnswers(event.currentTarget);
-    setSending("submit");
+    setSending(true);
     // 仮登録が送れるまでは完了画面へ進まない
     const dropId = await ensureDropUntilDone(boxCode);
     // 追加の情報は任意なので、送れなかったときも完了の画面へ進む
@@ -47,21 +47,18 @@ export function DropForm({ boxCode }: { boxCode: string }) {
       router.push(`/b/${boxCode}/sent`);
       return;
     }
-    setSending("none");
+    setSending(false);
   }
 
-  // 種類と貴重品の回答はここで送っておき、撮影の画面には持ち越さない
-  async function openCamera() {
+  // 撮影には dropId はいらないので、回線が悪くても待たせずに撮影画面へ移る。
+  // 仮登録と種類・貴重品の回答は、撮影画面を開いている間も送り続ける（撮影画面も showDropPage で数える）
+  function openCamera() {
     if (!formRef.current) return;
     const answers = readAnswers(formRef.current);
-    setSending("camera");
-    const dropId = await ensureDropUntilDone(boxCode);
-    if (dropId) await sendAnswers(boxCode, dropId, answers);
-    if (dropId && isDropPageShown(boxCode)) {
-      router.push(`/b/${boxCode}/camera`);
-      return;
-    }
-    setSending("none");
+    router.push(`/b/${boxCode}/camera`);
+    void ensureDropUntilDone(boxCode).then((dropId) => {
+      if (dropId) return sendAnswers(boxCode, dropId, answers);
+    });
   }
 
   return (
@@ -78,11 +75,11 @@ export function DropForm({ boxCode }: { boxCode: string }) {
         </Select>
       </Field>
       <Checkbox name="isValuable" label="財布・スマホ・鍵など貴重品かも" />
-      <Button type="button" variant="secondary" disabled={sending !== "none"} onClick={openCamera}>
-        {sending === "camera" ? "準備しています…" : "写真を撮る（任意）"}
+      <Button type="button" variant="secondary" disabled={sending} onClick={openCamera}>
+        写真を撮る（任意）
       </Button>
-      <Button type="submit" disabled={sending !== "none"}>
-        {sending === "submit" ? "送信しています…" : "写真を撮らずに送信"}
+      <Button type="submit" disabled={sending}>
+        {sending ? "送信しています…" : "写真を撮らずに送信"}
       </Button>
     </form>
   );

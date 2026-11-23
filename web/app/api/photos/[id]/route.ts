@@ -23,8 +23,8 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/photos/[id]
   return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": rows[0].content_type,
-      // 写真は差し替えると id が変わるので、同じ id の中身は変わらない
-      "Cache-Control": "private, max-age=86400, immutable",
+      // 共有の端末でログアウトした後に、ブラウザーに残った写真を見られないようにする
+      "Cache-Control": "private, no-store",
     },
   });
 }

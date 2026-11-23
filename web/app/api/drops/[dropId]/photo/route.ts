@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { isDropId } from "@/lib/drops";
-import { MAX_PHOTO_BYTES, PHOTO_CONTENT_TYPE, deletePhotoFile, isJpeg, savePhotoFile } from "@/lib/photos";
+import { MAX_PHOTO_BYTES, PHOTO_CONTENT_TYPE, deletePhotoFile, normalizePhoto, savePhotoFile } from "@/lib/photos";
 
 /** 本文を最大 limit バイトまで読む。超えたら読むのをやめて null。 */
 async function readAtMost(request: Request, limit: number): Promise<Uint8Array | null> {
@@ -43,11 +43,18 @@ export async function POST(request: Request, ctx: RouteContext<"/api/drops/[drop
   if (!bytes) {
     return Response.json({ error: { message: "写真が大きすぎます" } }, { status: 413 });
   }
-  if (!isJpeg(bytes)) {
+  // ログインのいらない API なので、無い仮登録あてには写真を展開もファイルの書き込みもしない
+  const exists = await db.query("SELECT 1 FROM items WHERE id = $1 AND status = 'provisional'", [dropId]);
+  if (exists.rowCount === 0) {
+    return Response.json({ error: { message: "仮登録が見つかりません" } }, { status: 404 });
+  }
+  // 途中で切れたなど、開けない写真で差し替えて元の写真を失わないよう、保存の前に展開して確かめる
+  const photo = await normalizePhoto(bytes);
+  if (!photo) {
     return Response.json({ error: { message: "JPEG の写真を送ってください" } }, { status: 415 });
   }
 
-  const { id, fileKey } = await savePhotoFile(bytes);
+  const { id, fileKey } = await savePhotoFile(photo);
   const client = await db.connect();
   let replaced: string[] = [];
   try {

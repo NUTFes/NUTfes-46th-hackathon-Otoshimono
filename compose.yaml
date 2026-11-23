@@ -14,8 +14,21 @@ services:
       PGPASSWORD: otoshimono_dev
       STAFF_PASSCODE: otoshimono-dev-passcode
       SESSION_SECRET: local-dev-session-secret-change-me
+      # メールの送信先（開発用のテスト値。Mailpit が受け取るだけで、外には送らない）
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      MAIL_FROM: "技大祭 落とし物窓口（TEST） <test@example.com>"
+      MAIL_SUBJECT_PREFIX: "[TEST]"
+      APP_ORIGIN: http://127.0.0.1:3000
     volumes:
       - photos_data:/app/data/photos
+
+  # 開発用のメール確認サーバー。届いたメールは http://127.0.0.1:8025 で見られる
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 
   db:
     image: postgres:17

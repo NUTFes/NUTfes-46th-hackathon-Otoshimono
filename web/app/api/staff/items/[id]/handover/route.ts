@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { isItemId, validateHandover } from "@/lib/handovers";
+import { isHandoverId, isItemId, validateHandover } from "@/lib/handovers";
 import { rejectUnlessStaff } from "@/lib/staff-auth";
 
 function error(message: string, status: number, extra?: object) {
@@ -59,6 +59,66 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/items
     await client.query("ROLLBACK").catch(() => {});
     console.error("受渡の記録に失敗しました", e);
     return error("記録できませんでした。もう一度お試しください。", 500);
+  } finally {
+    client.release();
+  }
+}
+
+// 受渡を取り消し、拾得物を「本登録済」に戻す（受渡済の物だけ）。管理番号は変えない。
+// 受渡記録の行は消さずに「取り消し済み」（cancelled_at）にする（要件定義v2 要求10: 情報は削除しない）。
+export async function DELETE(request: Request, ctx: RouteContext<"/api/staff/items/[id]/handover">) {
+  const rejected = await rejectUnlessStaff();
+  if (rejected) return rejected;
+
+  const { id } = await ctx.params;
+  if (!isItemId(id)) return error("物品が見つかりません。", 404);
+
+  // 確認画面で対象にした受渡記録。画面を開いた後に別の人が取り消して受渡し直していたら、
+  // 新しい受渡を取り消さないよう、この記録がまだ有効なときだけ取り消す
+  const body: unknown = await request.json().catch(() => null);
+  const handoverId =
+    body !== null && typeof body === "object" ? (body as { handoverId?: unknown }).handoverId : undefined;
+  if (!isHandoverId(handoverId)) return error("取り消す受渡記録を指定してください。", 400);
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query<{ status: string }>(
+      "SELECT status FROM items WHERE id = $1 FOR UPDATE",
+      [id],
+    );
+    if (rows.length === 0) {
+      await client.query("ROLLBACK");
+      return error("物品が見つかりません。", 404);
+    }
+    if (rows[0].status !== "handed_over") {
+      await client.query("ROLLBACK");
+      return error("受渡済の物品だけ取り消せます。", 409);
+    }
+
+    const cancelled = await client.query(
+      "UPDATE handovers SET cancelled_at = now() WHERE id = $1 AND item_id = $2 AND cancelled_at IS NULL",
+      [handoverId, id],
+    );
+    if (cancelled.rowCount !== 1) {
+      // 確認画面を開いた後に、その受渡記録が取り消されている（いま有効なのは別の受渡）
+      await client.query("ROLLBACK");
+      return error(
+        "この受渡記録はすでに取り消されています。受渡記録の画面から開き直してください。",
+        409,
+        { code: "stale_handover" },
+      );
+    }
+    await client.query(
+      "UPDATE items SET status = 'registered', updated_at = now() WHERE id = $1",
+      [id],
+    );
+    await client.query("COMMIT");
+    return Response.json({ itemId: id }, { status: 200 });
+  } catch (e) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("受渡の取り消しに失敗しました", e);
+    return error("取り消せませんでした。もう一度お試しください。", 500);
   } finally {
     client.release();
   }

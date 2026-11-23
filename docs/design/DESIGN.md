@@ -162,7 +162,7 @@ Figma「無題」（https://www.figma.com/design/fEtGRXwFKjfE8rXuIMWKmu/）の
 - **カメラの背景**（camera-preview）: 撮影画面のカメラのプレビュー部分。
 
 ### Tertiary
-- **注意の面と文字**（notice-bg、notice-text）: 気をつけてほしいことを伝える枠。数は少なく、1画面に1つまで。
+- **注意の面と文字**（notice-bg、notice-text）: 気をつけてほしいことを伝える枠。数は少なく、1画面に1つまで。枠線と見出しを注意の文字の色にし、本文は通常の案内と同じ灰色（muted）にする（PNG どおり）。
 - **エラーの文字**（error）: 入力の誤りを伝える文字と、誤りのある入力欄の枠線。Figma には無いので、実装のときに足した（白地でのコントラスト 6.5:1）。
 
 ### Named Rules

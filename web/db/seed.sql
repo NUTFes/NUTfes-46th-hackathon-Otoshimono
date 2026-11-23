@@ -34,6 +34,11 @@ FROM (VALUES
   (1, 'handed_over', 'umbrella',   NULL,       'navy',  NULL,        '紺色の折りたたみ傘。',                 '本部')
 ) AS v(box_id, status, category, category_note, color, color_note, description, storage_location);
 
+-- 受渡済の傘の受渡記録。受渡済の物には、取り消していない受渡記録が1件ある
+INSERT INTO handovers (item_id, recipient_name, phone, email, identity_note, handed_over_at)
+SELECT id, '山田 太郎', '090-0000-0000', 'taro.yamada@example.com', '学生証で確認', now() - interval '1 hour'
+FROM items WHERE status = 'handed_over';
+
 -- 不明（仮登録済から1件、本登録済から1件）
 INSERT INTO items (box_id, status, previous_status, unknown_reason, unknown_note, dropped_at)
 VALUES (3, 'unknown', 'provisional', '回収時に見当たらない', '箱の中と周囲を確認しました。', now() - interval '6 hours');

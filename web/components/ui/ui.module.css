@@ -5,9 +5,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+  /* 下端の線を含めて 64px（PNG どおり。「戻る」48px の上下は約 8px） */
   min-height: 64px;
   /* 本文（最大 390px）と左端をそろえる。スマホでは左右 12px */
-  padding: var(--space-md) max(var(--space-md), calc((100% - 390px) / 2 + var(--space-md)));
+  padding: var(--space-xs) max(var(--space-md), calc((100% - 390px) / 2 + var(--space-md)));
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -204,13 +205,13 @@
   color: var(--color-text-muted);
 }
 
+/* PNG どおり、枠線と見出しは茶色、本文は通常の案内と同じ灰色 */
 .warning {
-  border-color: var(--color-notice-bg);
+  border-color: var(--color-notice-text);
   background: var(--color-notice-bg);
 }
 
-.warning .noticeTitle,
-.warning .noticeBody {
+.warning .noticeTitle {
   color: var(--color-notice-text);
 }
 
@@ -247,7 +248,8 @@
 
 .definitionList {
   display: grid;
-  grid-template-columns: 7.25rem 1fr;
+  /* 値の列は PNG どおりカードの左端から 116px（項目 100px + 間 16px）。「届けられた場所」が1行に収まる幅 */
+  grid-template-columns: 6.25rem 1fr;
   row-gap: var(--space-lg);
   column-gap: var(--space-lg);
 }

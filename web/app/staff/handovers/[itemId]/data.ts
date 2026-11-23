@@ -14,7 +14,7 @@ export type HandoverRecord = {
   handedOverAt: Date;
 };
 
-/** 物品と、その最新の受渡記録。受渡記録がなければ null。 */
+/** 物品と、その最新の受渡記録（取り消し済みは除く）。受渡記録がなければ null。 */
 export async function getLatestHandover(itemId: string): Promise<HandoverRecord | null> {
   const { rows } = await db.query<{
     status: string;
@@ -31,7 +31,7 @@ export async function getLatestHandover(itemId: string): Promise<HandoverRecord 
             h.recipient_name, h.phone, h.email, h.identity_note, h.handed_over_at
        FROM items i
        JOIN handovers h ON h.item_id = i.id
-      WHERE i.id = $1
+      WHERE i.id = $1 AND h.cancelled_at IS NULL
       ORDER BY h.handed_over_at DESC, h.id DESC
       LIMIT 1`,
     [itemId],

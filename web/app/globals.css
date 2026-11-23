@@ -12,6 +12,8 @@
   --color-camera-preview: #222823;
   --color-notice-bg: #f8f2e7;
   --color-notice-text: #805c24;
+  /* 注意の枠の本文。muted（#757575）は注意の面の上ではコントラスト比 4.13:1 で足りないので、少し濃くする（4.78:1） */
+  --color-notice-muted: #6b6b6b;
   --color-error: #b3261e;
 
   --radius-sm: 4px;

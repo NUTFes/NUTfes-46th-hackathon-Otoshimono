@@ -205,7 +205,7 @@
   color: var(--color-text-muted);
 }
 
-/* PNG どおり、枠線と見出しは茶色、本文は通常の案内と同じ灰色 */
+/* PNG どおり、枠線と見出しは茶色、本文は灰色（読みやすさのため muted より少し濃い） */
 .warning {
   border-color: var(--color-notice-text);
   background: var(--color-notice-bg);
@@ -213,6 +213,10 @@
 
 .warning .noticeTitle {
   color: var(--color-notice-text);
+}
+
+.warning .noticeBody {
+  color: var(--color-notice-muted);
 }
 
 /* タブ（巡回 / 物品 / 紛失届） */

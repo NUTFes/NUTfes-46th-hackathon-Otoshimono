@@ -13,6 +13,7 @@ colors:
   camera-preview: "#222823"
   notice-bg: "#F8F2E7"
   notice-text: "#805C24"
+  notice-muted: "#6B6B6B"
   error: "#B3261E"
 typography:
   display:
@@ -162,7 +163,7 @@ Figma「無題」（https://www.figma.com/design/fEtGRXwFKjfE8rXuIMWKmu/）の
 - **カメラの背景**（camera-preview）: 撮影画面のカメラのプレビュー部分。
 
 ### Tertiary
-- **注意の面と文字**（notice-bg、notice-text）: 気をつけてほしいことを伝える枠。数は少なく、1画面に1つまで。枠線と見出しを注意の文字の色にし、本文は通常の案内と同じ灰色（muted）にする（PNG どおり）。
+- **注意の面と文字**（notice-bg、notice-text、notice-muted）: 気をつけてほしいことを伝える枠。数は少なく、1画面に1つまで。枠線と見出しを注意の文字の色にし、本文は灰色にする（PNG どおり）。本文の灰色は、PNG の muted（#757575）だと注意の面の上でコントラスト比が 4.13:1 で WCAG AA の 4.5:1 に届かないので、少し濃い notice-muted（4.78:1）を使う。
 - **エラーの文字**（error）: 入力の誤りを伝える文字と、誤りのある入力欄の枠線。Figma には無いので、実装のときに足した（白地でのコントラスト 6.5:1）。
 
 ### Named Rules

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Field, Notice, PageHeading, Select } from "@/components/ui";
 import {
   validateRegistration,
@@ -28,14 +28,26 @@ export function EditForm({
   const router = useRouter();
   const [step, setStep] = useState<"form" | "photo">("form");
   const [input, setInput] = useState<RegistrationInput>(initial);
+  // 保存済みの内容（保存されたらこのフォームは key で作り直される）
+  const initialRef = useRef(initial);
   const [errors, setErrors] = useState<RegistrationErrors>({});
   // 撮り直した写真。「変更を保存する」まで送らない（保存せずに戻れば写真も変わらない）
   const [newPhoto, setNewPhoto] = useState<{ blob: Blob; url: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
-  // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
-  useEffect(() => () => setSending(false), []);
+  // 画面を離れても状態は残る（cacheComponents）。保存しないで離れたら、入力も写真も保存済みの内容に戻しておく
+  useEffect(
+    () => () => {
+      setSending(false);
+      setStep("form");
+      setInput(initialRef.current);
+      setErrors({});
+      setNewPhoto(null);
+      setFailure(null);
+    },
+    [],
+  );
   // プレビュー用の URL を片付ける
   useEffect(() => {
     if (!newPhoto) return;
@@ -65,7 +77,8 @@ export function EditForm({
     setFailure(null);
     try {
       if (newPhoto) {
-        const response = await fetch(`/api/staff/items/${itemId}/photos`, {
+        // 本登録済の物の写真の変更として送る（状態が変わっていたら差し替えない）
+        const response = await fetch(`/api/staff/items/${itemId}/photos?status=registered`, {
           method: "POST",
           headers: { "Content-Type": "image/jpeg" },
           body: newPhoto.blob,
@@ -87,8 +100,9 @@ export function EditForm({
       });
       if (response.status === 401) return router.replace("/staff/login");
       if (response.ok) {
-        router.push(`/staff/items/${itemId}?saved=1`);
+        // この画面の中身も読み直しておく（戻ってきたときに保存した内容が出るように）
         router.refresh();
+        router.push(`/staff/items/${itemId}?saved=1`);
         return;
       }
       const body = (await response.json().catch(() => ({}))) as {

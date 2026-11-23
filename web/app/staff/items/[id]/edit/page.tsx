@@ -33,6 +33,7 @@ type Item = {
   storage_location: string | null;
   box_area: string;
   photo_id: string | null;
+  updated_at: Date;
 };
 
 async function EditItem({ params }: Pick<PageProps<"/staff/items/[id]/edit">, "params">) {
@@ -42,7 +43,7 @@ async function EditItem({ params }: Pick<PageProps<"/staff/items/[id]/edit">, "p
 
   const { rows } = await db.query<Item>(
     `SELECT i.status, i.management_number, i.category, i.category_note, i.color, i.color_note,
-            i.description, i.storage_location, b.area AS box_area,
+            i.description, i.storage_location, b.area AS box_area, i.updated_at,
             (SELECT p.id FROM item_photos p WHERE p.item_id = i.id AND p.kind = 'register') AS photo_id
        FROM items i JOIN boxes b ON b.id = i.box_id
       WHERE i.id = $1`,
@@ -73,7 +74,9 @@ async function EditItem({ params }: Pick<PageProps<"/staff/items/[id]/edit">, "p
     <>
       <StaffHeader backHref={detailHref} />
       <Page>
+        {/* 保存されて中身が変わったら、前の入力を残さずに作り直す */}
         <EditForm
+          key={item.updated_at.toISOString()}
           itemId={id}
           summary={`${item.management_number} / ${describeCategory(item.category, item.category_note)}`}
           boxArea={item.box_area}

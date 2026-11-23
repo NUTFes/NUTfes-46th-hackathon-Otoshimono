@@ -17,13 +17,15 @@ export function UndoForm({ itemId, cancelHref }: { itemId: string; cancelHref: s
     setFailure(null);
     try {
       const response = await fetch(`/api/staff/items/${itemId}/handover`, { method: "DELETE" });
+      // 応答を待つあいだに画面を離れていたら、遅れて届いた応答で画面を切り替えない
+      const stillHere = window.location.pathname === `/staff/handovers/${itemId}/undo`;
       if (response.ok) {
         // 本登録済に戻った物品の詳細へ
-        router.replace(`/staff/items/${itemId}`);
+        if (stillHere) router.replace(`/staff/items/${itemId}`);
         return;
       }
       if (response.status === 401) {
-        router.replace("/staff/login");
+        if (stillHere) router.replace("/staff/login");
         return;
       }
       const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
@@ -45,9 +47,16 @@ export function UndoForm({ itemId, cancelHref }: { itemId: string; cancelHref: s
         <Button onClick={undo} disabled={sending}>
           {sending ? "取り消しています…" : "受渡を取り消して戻す"}
         </Button>
-        <ButtonLink href={cancelHref} variant="secondary">
-          取り消さずに戻る
-        </ButtonLink>
+        {sending ? (
+          // 送信中は押せないようにする（押しても送った取り消しは止まらず、やめられたと誤解するため）
+          <Button variant="secondary" disabled>
+            取り消さずに戻る
+          </Button>
+        ) : (
+          <ButtonLink href={cancelHref} variant="secondary">
+            取り消さずに戻る
+          </ButtonLink>
+        )}
       </div>
     </>
   );

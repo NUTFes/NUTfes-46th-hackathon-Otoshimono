@@ -12,7 +12,7 @@ type Submission =
   | { state: "idle" }
   | { state: "sending" }
   | { state: "failed"; message: string }
-  | { state: "done"; reportNumber: string };
+  | { state: "done"; reportNumber: string; token: string };
 
 export function LostReportReview() {
   const router = useRouter();
@@ -29,11 +29,12 @@ export function LostReportReview() {
   }, [shouldGoBack, router]);
 
   if (submission.state === "done") {
+    // 受付・確認状況のページ（/lost/[token]）へ移るまでのあいだだけ出す
     return (
       <>
         <PageHeading title="紛失届を受け付けました" />
         <DefinitionList items={[{ label: "受付番号", value: submission.reportNumber }]} />
-        <Notice title="実行委員が内容を確認し、メールでご連絡します。" />
+        <ButtonLink href={`/lost/${submission.token}`}>受付・確認状況を見る</ButtonLink>
       </>
     );
   }
@@ -57,17 +58,20 @@ export function LostReportReview() {
       });
       const body = (await response.json().catch(() => ({}))) as {
         reportNumber?: string;
+        token?: string;
         message?: string;
       };
-      if (!response.ok || !body.reportNumber) {
+      if (!response.ok || !body.reportNumber || !body.token) {
         setSubmission({
           state: "failed",
           message: body.message ?? "受け付けられませんでした。時間をおいてもう一度お試しください。",
         });
         return;
       }
+      // 先に done にしてから下書きを消す（下書きが消えたことで入力画面へ戻されないように）
+      setSubmission({ state: "done", reportNumber: body.reportNumber, token: body.token });
       clearLostReportDraft(requestId);
-      setSubmission({ state: "done", reportNumber: body.reportNumber });
+      router.replace(`/lost/${body.token}`);
     } catch {
       setSubmission({
         state: "failed",

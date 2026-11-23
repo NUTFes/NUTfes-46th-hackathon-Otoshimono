@@ -56,6 +56,11 @@ export const MAX_LENGTH: Record<LostReportField, number> = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** 状況ページ（/lost/[token]）の token の形か。API が作る 32 バイトの乱数（base64url で 43 文字）。 */
+export function isLostReportToken(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
 /** 送り直しで二重に登録しないために、画面が届け出ごとに作る ID（UUID）か。 */
 export function isRequestId(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);

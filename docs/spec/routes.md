@@ -45,9 +45,9 @@
 
 | ページ | 画面 | API（書き込み） | 担当 |
 |---|---|---|---|
-| `/b/[boxCode]` | V-DROP | `POST /api/drops`（画面の表示後に呼び、仮登録を作る） | 担当1 |
-| `/b/[boxCode]/camera` | V-CAMERA、V-PHOTO-READY | `POST /api/drops/[dropId]/photo`、`PATCH /api/drops/[dropId]`（種類と貴重品の回答） | 担当1 |
-| `/b/[boxCode]/sent` | V-DROP-SENT | — | 担当1 |
+| `/b/[boxCode]` | V-DROP | `POST /api/drops`（画面の表示後に呼び、仮登録を作る。`dropId` は画面側で作って送り、同じ `dropId` は2件目にしない） | 担当1 |
+| `/b/[boxCode]/camera` | V-CAMERA、V-PHOTO-READY | `POST /api/drops/[dropId]/photo` | 担当1 |
+| `/b/[boxCode]/sent` | V-DROP-SENT（V-DROP の「写真を撮らずに送信」の後） | `PATCH /api/drops/[dropId]`（種類と貴重品の回答。送らなかった項目は変えない） | 担当1 |
 | `/lost` → `/lost/review` | V-LOST → V-REVIEW | `POST /api/lost-reports` | 担当2 |
 | `/lost/[token]` | V-STATUS、V-STATUS-ZERO（カテゴリ別の件数を出す。メールにもこの URL を載せる） | — | 担当2 |
 | `/lost/[token]/pickup` | V-PICKUP | — | 担当2 |

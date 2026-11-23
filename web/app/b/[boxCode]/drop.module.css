@@ -1,0 +1,41 @@
+.thanks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+}
+
+.instruction {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.lead {
+  color: var(--color-text-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.sent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}

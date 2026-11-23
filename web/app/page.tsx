@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 // 拾得者はボックスのQRから直接入るので、ここは通らない。説明だけの画面で、DB は読まない。
 export default function Home() {
   return (
-    <Page>
+    <Page className={styles.page}>
       <div className={styles.heading}>
         <p className={styles.audience}>技大祭</p>
         <PageHeading title="落とし物のご案内" description="なくした方と、見つけた方はこちらから。" />

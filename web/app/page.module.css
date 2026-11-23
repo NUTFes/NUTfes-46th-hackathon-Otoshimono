@@ -1,0 +1,40 @@
+/* V-HOME の配置。部品の見た目は web/components/ui。 */
+
+/* PNG どおり、見出しとカードの間、カードどうしの間は 20px */
+.page {
+  gap: calc(var(--space-lg) + var(--space-xs));
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-lg) + var(--space-xs));
+  /* 説明の文（PageHeading の description）の行の高さを PNG に合わせる */
+  line-height: 24px;
+}
+
+.audience {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.cardBody {
+  color: var(--color-text-muted);
+  line-height: 24px;
+}

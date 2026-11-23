@@ -45,6 +45,7 @@
 
 | ページ | 画面 | API（書き込み） | 担当 |
 |---|---|---|---|
+| `/` | V-HOME（段階B。パンフレットやホームページから来た人への説明。拾得者は通らない） | — | 担当1 |
 | `/b/[boxCode]` | V-DROP | `POST /api/drops`（画面の表示後に呼び、仮登録を作る。`dropId` は画面側で作って送り、同じ `dropId` は2件目にしない） | 担当1 |
 | `/b/[boxCode]/camera` | V-CAMERA、V-PHOTO-READY | `POST /api/drops/[dropId]/photo` | 担当1 |
 | `/b/[boxCode]/sent` | V-DROP-SENT（V-DROP の「写真を撮らずに送信」の後） | `PATCH /api/drops/[dropId]`（種類と貴重品の回答。送らなかった項目は変えない。`answersVersion`（押した時刻）が保存済みより古い回答は反映しない） | 担当1 |

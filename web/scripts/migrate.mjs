@@ -1,5 +1,5 @@
 // db/migrations の連番付きSQLを、未適用のものだけ番号順に適用する。
-// 接続先は PG* 環境変数（PGHOST など）で指定する。
+// 接続先は PG* 環境変数（PGHOST など）で指定する。web/.env.local があれば読み込む。
 // 使い方: npm run db:migrate
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -7,10 +7,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
-const MIGRATIONS_DIR = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../db/migrations",
-);
+const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MIGRATIONS_DIR = path.join(WEB_DIR, "db/migrations");
+
+// .env.local は Docker 内には無いので、無ければ環境変数だけを使う。
+// すでに設定されている環境変数は上書きしない（--env-file と同じ）。
+try {
+  process.loadEnvFile(path.join(WEB_DIR, ".env.local"));
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
+
+const REBUILD_STEPS =
+  "リポジトリ直下で `docker compose down -v` → `docker compose up --wait db` → web/ で `npm run db:migrate` を実行し、DBを作り直してください。";
 const FILE_PATTERN = /^(\d{3})_[a-z0-9_]+\.sql$/;
 // 同時に複数のプロセスが適用しないようにするためのロックID（任意の固定値）
 const LOCK_ID = 46_2026_1123;
@@ -64,6 +73,18 @@ async function main() {
       "SELECT version, name, checksum FROM schema_migrations",
     );
     const applied = new Map(rows.map((row) => [row.version, row]));
+
+    // DBに適用済みのファイルが、今のファイル一覧と食い違っていないか確認する。
+    // 番号を振り直したときや、別のブランチのSQLを適用したまま切り替えたときに起きる。
+    const files = new Map(migrations.map((m) => [m.version, m]));
+    for (const done of rows) {
+      const file = files.get(done.version);
+      if (!file || file.name !== done.name) {
+        throw new Error(
+          `DBに適用済みの ${done.name} が、今のファイル（${file ? file.name : `番号 ${done.version} のファイルなし`}）と一致しません。番号の振り直しやブランチの切り替えで起きます。${REBUILD_STEPS}`,
+        );
+      }
+    }
 
     let count = 0;
     for (const migration of migrations) {

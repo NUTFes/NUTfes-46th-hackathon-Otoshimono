@@ -38,6 +38,7 @@
 - **色・余白などの値**: `web/app/globals.css` の CSS 変数（`var(--color-primary)` など）。値を直接書かない。
 - **実行委員の認証**: `web/lib/staff-auth.ts`。ページでは `<Suspense>` の中のコンポーネントで最初に `await requireStaff()` を呼ぶ（未ログインならログイン画面へ移る）。Route Handler では最初に `const rejected = await rejectUnlessStaff(); if (rejected) return rejected;` を書く（未ログインなら 401）。
 - **伏せ字**: `web/lib/mask.ts` の `maskName`、`maskPhone`、`maskEmail`。
+- **メール**: `web/lib/mail.ts` の `sendLostReportReceived`（E-RECEIVED）、`sendItemFound`（E-FOUND）、`sendNotFound`（E-NOTFOUND）。サーバー側（Route Handler）からだけ呼ぶ。例外は投げず、`{ ok: true }` か `{ ok: false, error }` を返すので、送れなかったときにどうするか（保存は取り消さない、状態を変えない、など）は呼ぶ側で決める。宛先と紛失届の `token` を渡せば、リンクの URL は関数が作る（環境変数 `APP_ORIGIN` から。リクエストの Host からは作らない）。開発中は Mailpit が受け取るだけで外には送らず、[http://127.0.0.1:8025](http://127.0.0.1:8025) で見られる。
 - **Next.js の注意**: `cacheComponents` が有効なので、Cookie や DB を読む処理と `await params`・`await searchParams` は `<Suspense>` の中のコンポーネントに置く。ページの `export default` 自体は同期のままにする（例: `web/app/staff/login/page.tsx`）。
 
 ## 技術スタック

@@ -18,6 +18,9 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
   const [errors, setErrors] = useState<HandoverErrors>({});
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  // すでに受渡済だったときの、受渡記録の確認先
+  const [receiptHref, setReceiptHref] = useState<string | null>(null);
+  const formPath = `/staff/items/${itemId}/handover`;
 
   function update<K extends keyof HandoverInput>(field: K, value: HandoverInput[K]) {
     setInput((current) => ({ ...current, [field]: value }));
@@ -37,26 +40,34 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
 
     setSending(true);
     setFailure(null);
+    setReceiptHref(null);
     try {
       const response = await fetch(`/api/staff/items/${itemId}/handover`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
+      // 応答を待つあいだに「戻る」などで画面を離れていたら、遅れて届いた応答で画面を切り替えない
+      const stillHere = window.location.pathname === formPath;
       if (response.ok) {
         // 受渡記録の表示（#20）ができるまでは、物品の詳細へ戻る
-        router.replace(backHref);
-        router.refresh();
+        if (stillHere) {
+          router.replace(backHref);
+          router.refresh();
+        }
         return;
       }
       const body = (await response.json().catch(() => ({}))) as {
-        error?: { message?: string; errors?: HandoverErrors };
+        error?: { message?: string; errors?: HandoverErrors; code?: string; receiptHref?: string };
       };
       if (response.status === 401) {
-        router.replace("/staff/login");
+        if (stillHere) router.replace("/staff/login");
         return;
       }
       if (body.error?.errors) setErrors(body.error.errors);
+      if (body.error?.code === "already_handed_over" && body.error.receiptHref) {
+        setReceiptHref(body.error.receiptHref);
+      }
       setFailure(body.error?.message ?? "記録できませんでした。もう一度お試しください。");
     } catch {
       setFailure("通信できませんでした。電波の良い場所でもう一度お試しください。");
@@ -140,14 +151,26 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
           <Notice tone="warning" title={failure} />
         </div>
       )}
+      {receiptHref && (
+        <ButtonLink href={receiptHref} variant="secondary">
+          受渡記録を確認する
+        </ButtonLink>
+      )}
 
       <div className={styles.actions}>
         <Button type="submit" disabled={sending}>
           {sending ? "記録しています…" : "受渡済として記録する"}
         </Button>
-        <ButtonLink href={backHref} variant="secondary">
-          記録せずに戻る
-        </ButtonLink>
+        {sending ? (
+          // 送信中は押せないようにする（押しても送った記録は止まらず、やめられたと誤解するため）
+          <Button variant="secondary" disabled>
+            記録せずに戻る
+          </Button>
+        ) : (
+          <ButtonLink href={backHref} variant="secondary">
+            記録せずに戻る
+          </ButtonLink>
+        )}
       </div>
     </form>
   );

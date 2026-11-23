@@ -57,6 +57,13 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
             <Notice title="管理番号と現物を確認してください">本登録した物品の受渡を記録します。</Notice>
             <HandoverForm itemId={id} backHref={detailHref} />
           </>
+        ) : item.status === "handed_over" ? (
+          <>
+            <Notice title="この物品はすでに受渡済です" tone="warning">
+              受渡記録を確認してください。
+            </Notice>
+            <ButtonLink href={`/staff/handovers/${id}`}>受渡記録を確認する</ButtonLink>
+          </>
         ) : (
           <>
             <Notice title="この物品は受渡を記録できません" tone="warning">

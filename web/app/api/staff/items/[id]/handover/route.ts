@@ -2,8 +2,8 @@ import { db } from "@/lib/db";
 import { isItemId, validateHandover } from "@/lib/handovers";
 import { rejectUnlessStaff } from "@/lib/staff-auth";
 
-function error(message: string, status: number, errors?: object) {
-  return Response.json({ error: { message, ...(errors ? { errors } : {}) } }, { status });
+function error(message: string, status: number, extra?: object) {
+  return Response.json({ error: { message, ...extra } }, { status });
 }
 
 // 受渡を記録し、拾得物を「受渡済」にする（本登録済の物だけ）。
@@ -16,7 +16,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/items
 
   const body = await request.json().catch(() => null);
   const result = validateHandover(body);
-  if (!result.ok) return error("入力内容を確認してください。", 400, result.errors);
+  if (!result.ok) return error("入力内容を確認してください。", 400, { errors: result.errors });
   const handover = result.value;
 
   const client = await db.connect();
@@ -30,6 +30,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/items
     if (rows.length === 0) {
       await client.query("ROLLBACK");
       return error("物品が見つかりません。", 404);
+    }
+    if (rows[0].status === "handed_over") {
+      // 前回の記録が保存されたあとに応答だけが届かず、送り直された場合など。記録の確認先を案内する
+      await client.query("ROLLBACK");
+      return error("この物品はすでに受渡済として記録されています。受渡記録を確認してください。", 409, {
+        code: "already_handed_over",
+        receiptHref: `/staff/handovers/${id}`,
+      });
     }
     if (rows[0].status !== "registered") {
       await client.query("ROLLBACK");

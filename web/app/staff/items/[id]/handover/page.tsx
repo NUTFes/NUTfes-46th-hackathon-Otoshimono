@@ -30,8 +30,8 @@ type Item = {
   category: string | null;
   category_note: string | null;
   storage_location: string | null;
-  /** 受渡・取り消しで変わる。変わったらフォームを作り直す */
-  updated_at: string;
+  /** 取り消し済みを含む、いちばん新しい受渡記録。受渡と取り消しのあとに変わったら、フォームを作り直す */
+  latest_handover_id: string | null;
 };
 
 async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">, "params">) {
@@ -40,7 +40,8 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
   if (!isItemId(id)) notFound();
 
   const { rows } = await db.query<Item>(
-    `SELECT status, management_number, category, category_note, storage_location, updated_at::text AS updated_at
+    `SELECT status, management_number, category, category_note, storage_location,
+            (SELECT max(h.id) FROM handovers h WHERE h.item_id = items.id) AS latest_handover_id
        FROM items WHERE id = $1`,
     [id],
   );
@@ -66,8 +67,9 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
               受け取りに来た人が届け出人本人か確かめてください。
             </FoundNotices>
             {/* 離れた画面の入力は残る（cacheComponents）ので、受渡を取り消して記録し直すときは作り直し、
-                前に受け取った人の氏名・連絡先と確認のチェックを残さない。紛失届を見て戻っただけなら入力は残る */}
-            <HandoverForm key={item.updated_at} itemId={id} backHref={detailHref} />
+                前に受け取った人の氏名・連絡先と確認のチェックを残さない。
+                物品の編集（保管場所など）では作り直さず、入力中の内容を消さない */}
+            <HandoverForm key={item.latest_handover_id ?? "none"} itemId={id} backHref={detailHref} />
           </>
         ) : item.status === "handed_over" ? (
           <>

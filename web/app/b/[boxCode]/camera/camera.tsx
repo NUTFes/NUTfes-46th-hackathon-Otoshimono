@@ -44,6 +44,8 @@ export function Camera({ boxCode }: { boxCode: string }) {
   const needsCamera = step.kind === "starting" || step.kind === "live";
   // この撮影画面そのものを表示しているか。同じ BOX の V-DROP に戻ったら、写真の送り直しも完了画面への移動もしない
   const shownRef = useRef(false);
+  // 画面を離れるたびに増やす。離れる前に始めた送信は、同じ画面を開き直しても続けない（古い写真の再送や移動をしない）
+  const visitRef = useRef(0);
 
   // この画面を離れたら、仮登録や写真の送り直しをやめる
   useEffect(() => {
@@ -51,6 +53,7 @@ export function Camera({ boxCode }: { boxCode: string }) {
     const hide = showDropPage(boxCode);
     return () => {
       shownRef.current = false;
+      visitRef.current += 1;
       hide();
       // 画面を離れても状態は残る（cacheComponents）ので、完了画面から戻ってきたときにボタンを押せるよう戻しておく
       setStep((current) => (current.kind === "sending" ? { ...current, kind: "captured" } : current));
@@ -110,12 +113,16 @@ export function Camera({ boxCode }: { boxCode: string }) {
     if (step.kind !== "captured") return;
     const captured = step;
     setStep({ ...captured, kind: "sending" });
+    const visit = visitRef.current;
+    const stillHere = () => shownRef.current && visitRef.current === visit;
     // 仮登録が送れるまでは完了画面へ進まない
     const dropId = await ensureDropUntilDone(boxCode);
     // 写真は任意なので、送れなかったときも完了の画面へ進む（通信エラーの画面は作らない）
-    if (dropId && shownRef.current) await sendPhoto(dropId, captured.photo, () => shownRef.current);
-    // 待っている間に画面を離れていたら動かさない。受け付けられない（BOX が無いなど）ときは完了と出さない
-    if (dropId && shownRef.current) router.push(`/b/${boxCode}/sent`);
+    if (dropId && stillHere()) await sendPhoto(dropId, captured.photo, stillHere);
+    // 待っている間に画面を離れていたら、画面に触らない（離れたときに確認画面へ戻してある）
+    if (!stillHere()) return;
+    // 受け付けられない（BOX が無いなど）ときは完了と出さない
+    if (dropId) router.push(`/b/${boxCode}/sent`);
     else setStep(captured);
   }
 

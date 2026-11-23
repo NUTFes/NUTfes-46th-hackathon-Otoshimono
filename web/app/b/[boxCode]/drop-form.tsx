@@ -36,10 +36,12 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     event.preventDefault();
     const answers = readAnswers(event.currentTarget);
     setSending(true);
+    // 押した時点の回答を、撮影画面へ進んだときの回答より後に送る
+    const answersSent = sendAnswers(boxCode, answers);
     // 仮登録が送れるまでは完了画面へ進まない
     const dropId = await ensureDropUntilDone(boxCode);
     // 追加の情報は任意なので、送れなかったときも完了の画面へ進む
-    if (dropId) await sendAnswers(boxCode, dropId, answers);
+    if (dropId) await answersSent;
     // 待っている間に画面を離れていたら、別の画面を見ている人を動かさない。
     // 送り直しても受け付けられない（BOX が無くなったなど）ときは、完了とは出さない
     if (dropId && isDropPageShown(boxCode)) {
@@ -56,9 +58,7 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     if (!formRef.current) return;
     const answers = readAnswers(formRef.current);
     router.push(`/b/${boxCode}/camera`);
-    void ensureDropUntilDone(boxCode).then((dropId) => {
-      if (dropId) return sendAnswers(boxCode, dropId, answers);
-    });
+    void sendAnswers(boxCode, answers);
   }
 
   return (

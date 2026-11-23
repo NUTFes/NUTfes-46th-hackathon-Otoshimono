@@ -54,10 +54,13 @@ export async function POST(request: Request, ctx: RouteContext<"/api/drops/[drop
     return Response.json({ error: { message: "JPEG の写真を送ってください" } }, { status: 415 });
   }
 
-  const { id, fileKey } = await savePhotoFile(photo);
+  // 先に DB へつないでからファイルを書く（つなげずに、DB に紐づかないファイルが残らないように）
   const client = await db.connect();
+  let saved: { id: string; fileKey: string } | null = null;
   let replaced: string[] = [];
   try {
+    saved = await savePhotoFile(photo);
+    const { id, fileKey } = saved;
     await client.query("BEGIN");
     // 実行委員が回収したあとの物には、拾得者から写真を足せないようにする
     const item = await client.query(
@@ -80,8 +83,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/drops/[drop
     );
     await client.query("COMMIT");
   } catch (error) {
-    await client.query("ROLLBACK");
-    await deletePhotoFile(fileKey);
+    await client.query("ROLLBACK").catch(() => {});
+    if (saved) await deletePhotoFile(saved.fileKey);
     throw error;
   } finally {
     client.release();

@@ -50,11 +50,8 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
       // 応答を待つあいだに「戻る」などで画面を離れていたら、遅れて届いた応答で画面を切り替えない
       const stillHere = window.location.pathname === formPath;
       if (response.ok) {
-        // 受渡記録の表示（#20）ができるまでは、物品の詳細へ戻る
-        if (stillHere) {
-          router.replace(backHref);
-          router.refresh();
-        }
+        // 記録した受渡記録（伏せ字）を開く
+        if (stillHere) router.replace(`/staff/handovers/${itemId}`);
         return;
       }
       const body = (await response.json().catch(() => ({}))) as {

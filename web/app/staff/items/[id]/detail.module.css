@@ -1,0 +1,55 @@
+/* M-DETAIL の配置。部品の見た目は web/components/ui。 */
+
+.numberCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-xl) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+/* DESIGN.md の Display（管理番号だけに使う） */
+.number {
+  color: var(--color-primary);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 48px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.multiline {
+  white-space: pre-wrap;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+/* M-DETAIL の写真枠（342 × 144） */
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 342 / 144;
+  object-fit: cover;
+  background: var(--color-photo-placeholder);
+}
+
+/* 縦に積むボタンの間は 8px（DESIGN.md の Layout） */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

@@ -1,0 +1,23 @@
+/* M-REPORT-DETAIL の配置。部品の見た目は web/components/ui。 */
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.multiline {
+  white-space: pre-wrap;
+}
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button, Checkbox, Field, Select } from "@/components/ui";
 import { CATEGORIES } from "@/lib/categories";
 import { ensureDropUntilDone, isDropPageShown, sendAnswers, showDropPage, type DropAnswers } from "./drop-client";
@@ -17,7 +17,8 @@ function readAnswers(form: HTMLFormElement): DropAnswers {
 
 export function DropForm({ boxCode }: { boxCode: string }) {
   const router = useRouter();
-  const [sending, setSending] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [sending, setSending] = useState<"none" | "camera" | "submit">("none");
 
   // 画面を開いた時点で仮登録を送り、届くまで送り続ける（ボタンを押さない人も記録する）
   // 画面を離れたら送り直しをやめる（showDropPage の後片付け）
@@ -30,7 +31,7 @@ export function DropForm({ boxCode }: { boxCode: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const answers = readAnswers(event.currentTarget);
-    setSending(true);
+    setSending("submit");
     // 仮登録が送れるまでは完了画面へ進まない
     const dropId = await ensureDropUntilDone(boxCode);
     // 追加の情報は任意なので、送れなかったときも完了の画面へ進む
@@ -39,11 +40,22 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     // 送り直しても受け付けられない（BOX が無くなったなど）ときは、完了とは出さない
     if (dropId && isDropPageShown(boxCode)) router.push(`/b/${boxCode}/sent`);
     // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
-    setSending(false);
+    setSending("none");
+  }
+
+  // 種類と貴重品の回答はここで送っておき、撮影の画面には持ち越さない
+  async function openCamera() {
+    if (!formRef.current) return;
+    const answers = readAnswers(formRef.current);
+    setSending("camera");
+    const dropId = await ensureDropUntilDone(boxCode);
+    if (dropId) await sendAnswers(boxCode, dropId, answers);
+    if (dropId && isDropPageShown(boxCode)) router.push(`/b/${boxCode}/camera`);
+    setSending("none");
   }
 
   return (
-    <form onSubmit={submit} className={styles.form}>
+    <form ref={formRef} onSubmit={submit} className={styles.form}>
       <h2 className={styles.sectionTitle}>追加の情報（任意）</h2>
       <Field label="種類（任意）" htmlFor="reportedCategory">
         <Select id="reportedCategory" name="reportedCategory" defaultValue="">
@@ -56,8 +68,11 @@ export function DropForm({ boxCode }: { boxCode: string }) {
         </Select>
       </Field>
       <Checkbox name="isValuable" label="財布・スマホ・鍵など貴重品かも" />
-      <Button type="submit" disabled={sending}>
-        {sending ? "送信しています…" : "写真を撮らずに送信"}
+      <Button type="button" variant="secondary" disabled={sending !== "none"} onClick={openCamera}>
+        {sending === "camera" ? "準備しています…" : "写真を撮る（任意）"}
+      </Button>
+      <Button type="submit" disabled={sending !== "none"}>
+        {sending === "submit" ? "送信しています…" : "写真を撮らずに送信"}
       </Button>
     </form>
   );

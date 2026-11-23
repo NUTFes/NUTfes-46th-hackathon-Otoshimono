@@ -14,6 +14,8 @@ services:
       PGPASSWORD: otoshimono_dev
       STAFF_PASSCODE: otoshimono-dev-passcode
       SESSION_SECRET: local-dev-session-secret-change-me
+    volumes:
+      - photos_data:/app/data/photos
 
   db:
     image: postgres:17
@@ -33,3 +35,4 @@ services:
 
 volumes:
   postgres_data:
+  photos_data:

@@ -168,3 +168,22 @@ export async function sendAnswers(boxCode: string, dropId: string, answers: Drop
     { shouldContinue: () => isDropPageShown(boxCode) },
   );
 }
+
+/**
+ * 撮った写真を送る。送れたら true。写真は任意なので、送れなくても呼び出し側は先へ進む。
+ * shouldContinue は撮影画面を表示しているか（V-DROP を表示していても、撮影画面を離れたら送り直さない）。
+ */
+export async function sendPhoto(dropId: string, photo: Blob, shouldContinue: () => boolean): Promise<boolean> {
+  const response = await withRetry(
+    (signal) =>
+      fetch(`/api/drops/${dropId}/photo`, {
+        method: "POST",
+        headers: { "Content-Type": "image/jpeg" },
+        body: photo,
+        signal,
+      }),
+    // 写真は大きいので、1回あたりの待ち時間を長めにする
+    { timeoutMs: 20000, shouldContinue },
+  );
+  return response?.ok ?? false;
+}

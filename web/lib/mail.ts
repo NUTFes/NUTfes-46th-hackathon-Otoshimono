@@ -57,9 +57,11 @@ async function send(to: string, build: (origin: string) => Message): Promise<Mai
     console.error("メールを送れませんでした:", config);
     return { ok: false, error: config };
   }
-  const message = build(config.origin);
   try {
+    const message = build(config.origin);
     const transport = nodemailer.createTransport({
+      // 挨拶（EHLO）でサーバーのマシン名を名乗らず、アプリの URL のホスト名を使う
+      name: new URL(config.origin).hostname,
       host: config.host,
       port: config.port,
       secure: config.secure,
@@ -189,7 +191,7 @@ export function sendNotFound(input: { to: string; token: string }): Promise<Mail
 
 // ---- HTML の組み立て ----
 // メールソフトの多くは <style> や外部の CSS を読まないので、表で組み、見た目は style 属性に直接書く。
-// 色と大きさは docs/design/DESIGN.md（web/app/globals.css）と同じ値。
+// 色は docs/design/DESIGN.md（web/app/globals.css）と同じ値。文字の大きさは E-RECEIVED などの PNG に合わせる（本文は 14px）。
 
 const COLOR = {
   primary: "#254b3f",
@@ -220,7 +222,7 @@ function layout(title: string, blocks: string[]): string {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border:1px solid ${COLOR.border};font-family:${FONT};color:${COLOR.text};">
 <tr><td style="padding:32px 32px 32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="font-size:14px;line-height:22px;color:${COLOR.muted};">技大祭 落とし物窓口</td></tr>
+<tr><td style="font-size:13px;line-height:20px;color:${COLOR.muted};">技大祭 落とし物窓口</td></tr>
 <tr><td style="padding-top:24px;"><h1 style="margin:0;font-size:24px;line-height:32px;font-weight:500;">${escapeHtml(title)}</h1></td></tr>
 ${rows}
 </table>
@@ -233,20 +235,20 @@ ${rows}
 }
 
 function paragraph(text: string, { muted = false } = {}): string {
-  return `<p style="margin:0;font-size:16px;line-height:26px;color:${muted ? COLOR.muted : COLOR.text};">${escapeHtml(text)}</p>`;
+  return `<p style="margin:0;font-size:14px;line-height:24px;color:${muted ? COLOR.muted : COLOR.text};">${escapeHtml(text)}</p>`;
 }
 
 function definitionRow(label: string, value: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td width="116" valign="top" style="font-size:14px;line-height:22px;color:${COLOR.muted};">${escapeHtml(label)}</td>
-<td valign="top" style="font-size:16px;line-height:26px;">${escapeHtml(value)}</td>
+<td valign="top" style="font-size:14px;line-height:22px;">${escapeHtml(value)}</td>
 </tr></table>`;
 }
 
 function button(label: string, url: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td align="center" style="background:${COLOR.primary};border-radius:4px;">
-<a href="${escapeHtml(url)}" style="display:block;padding:13px 16px;font-size:16px;line-height:22px;color:${COLOR.onPrimary};text-decoration:none;">${escapeHtml(label)}</a>
+<a href="${escapeHtml(url)}" style="display:block;padding:13px 16px;font-size:14px;line-height:22px;color:${COLOR.onPrimary};text-decoration:none;">${escapeHtml(label)}</a>
 </td></tr></table>`;
 }
 

@@ -43,7 +43,10 @@ async function Contact({ params }: Pick<PageProps<"/staff/handovers/[itemId]/con
           ]}
         />
         <p className={styles.muted}>確認が終わったら、伏せ字表示に戻してください。</p>
-        <ButtonLink href={receiptHref}>伏せ字表示に戻す</ButtonLink>
+        {/* replace: この画面を履歴から外し、伏せ字の画面で「戻る」を押しても氏名・連絡先が再表示されないようにする */}
+        <ButtonLink href={receiptHref} replace>
+          伏せ字表示に戻す
+        </ButtonLink>
       </Page>
     </>
   );

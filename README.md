@@ -56,3 +56,11 @@ docker compose ps
 ```
 
 [http://127.0.0.1:3000](http://127.0.0.1:3000) を開きます。この構成では Next.js が Compose 内部の `db:5432` に接続し、接続設定は Compose から渡されます。マイグレーションはコンテナの起動時に自動で適用されます。コンテナを停止するにはリポジトリ直下で `docker compose down` を実行します。
+
+この構成の `app` は本番と同じ設定なので、コンテナの中では `npm run db:seed` を実行できません。開発用のデータを入れるときは、Compose の DB が `127.0.0.1:5432` で開いているので、PC 側から入れます（`.env.local` が無ければ、上と同じく `.env.example` から作ります）。
+
+```sh
+cd web
+npm ci
+npm run db:seed
+```

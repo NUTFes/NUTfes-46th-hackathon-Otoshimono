@@ -37,6 +37,8 @@ type Row = {
   item_description: string | null;
   features: string;
   created_at: Date;
+  /** 照合した物の管理番号（#15 の matched_item_id。受取案内を送っていなければ null） */
+  matched_management_number: string | null;
 };
 
 async function Reports({ searchParams }: Pick<PageProps<"/staff/reports">, "searchParams">) {
@@ -46,10 +48,12 @@ async function Reports({ searchParams }: Pick<PageProps<"/staff/reports">, "sear
   const status = isLostReportStatus(rawStatus) ? rawStatus : null;
 
   const { rows } = await db.query<Row>(
-    `SELECT id, report_number, status, category, item_description, features, created_at
-       FROM lost_reports
-      WHERE $1::text IS NULL OR status = $1
-      ORDER BY created_at DESC, id DESC`,
+    `SELECT r.id, r.report_number, r.status, r.category, r.item_description, r.features, r.created_at,
+            i.management_number AS matched_management_number
+       FROM lost_reports r
+       LEFT JOIN items i ON i.id = r.matched_item_id
+      WHERE $1::text IS NULL OR r.status = $1
+      ORDER BY r.created_at DESC, r.id DESC`,
     [status],
   );
 
@@ -83,11 +87,18 @@ function itemName(row: Row): string {
   return isCategoryCode(row.category) ? categoryLabel(row.category) : row.category;
 }
 
-/** 「確認待ち / 11/23 13:58」のような状況の行。確認待ちのときだけ受け付けた日時を添える。 */
+/**
+ * 「確認待ち / 11/23 13:58」のような状況の行。確認待ちのときは受け付けた日時を、
+ * 見つかった旨を通知済みのときは照合した物の管理番号（M-REPORTS-NOTIFIED の「… / L-0042」）を添える。
+ */
 function describeStatus(row: Row): string {
   if (!isLostReportStatus(row.status)) return row.status;
   const label = lostReportStatusLabel(row.status);
-  return row.status === "pending" ? `${label} / ${formatDateTime(row.created_at)}` : label;
+  if (row.status === "pending") return `${label} / ${formatDateTime(row.created_at)}`;
+  if (row.status === "found_notified" && row.matched_management_number) {
+    return `${label} / ${row.matched_management_number}`;
+  }
+  return label;
 }
 
 const DATE_TIME = new Intl.DateTimeFormat("ja-JP", {

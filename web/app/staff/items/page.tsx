@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { describeCategory, describeItemColor } from "@/lib/item-registration";
 import { isItemStatus, itemStatusLabel } from "@/lib/item-status";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime } from "./format";
+import { formatDateTime } from "@/lib/format";
 import { ItemStatusFilter } from "./status-filter";
 import styles from "./page.module.css";
 

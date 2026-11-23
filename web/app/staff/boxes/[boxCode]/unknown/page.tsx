@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { isBoxCode } from "@/lib/drops";
 import { itemStatusLabel } from "@/lib/item-status";
 import { requireStaff } from "@/lib/staff-auth";
-import { formatDateTime } from "../../../items/format";
+import { formatDateTime } from "@/lib/format";
 import { RestoreButton, UnknownForm } from "../../../unknown-actions";
 import styles from "../page.module.css";
 

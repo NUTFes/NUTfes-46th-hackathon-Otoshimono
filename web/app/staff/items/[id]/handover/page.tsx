@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ButtonLink, Notice, Page, PageHeading, StaffHeader } from "@/components/ui";
-import { categoryLabel, isCategoryCode } from "@/lib/categories";
+import { isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
 import { isItemId } from "@/lib/handovers";
+import { describeCategory } from "@/lib/item-registration";
+import { foundNoticesFor } from "@/lib/report-notices";
 import { requireStaff } from "@/lib/staff-auth";
+import { FoundNotices } from "../found-notices";
 import { HandoverForm } from "./handover-form";
 
 export const metadata: Metadata = {
@@ -43,6 +46,8 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
   if (!item) notFound();
 
   const detailHref = `/staff/items/${id}`;
+  // 受取案内を送った届け出人がいるなら、別の人に渡す前に気づけるようにする
+  const foundNotices = item.status === "registered" ? await foundNoticesFor(id) : [];
   const summary = [item.management_number, itemName(item), item.storage_location]
     .filter(Boolean)
     .join(" / ");
@@ -55,6 +60,9 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
         {item.status === "registered" ? (
           <>
             <Notice title="管理番号と現物を確認してください">本登録した物品の受渡を記録します。</Notice>
+            <FoundNotices reports={foundNotices} tone="warning">
+              受け取りに来た人が届け出人本人か確かめてください。
+            </FoundNotices>
             <HandoverForm itemId={id} backHref={detailHref} />
           </>
         ) : item.status === "handed_over" ? (
@@ -80,6 +88,5 @@ async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">
 }
 
 function itemName(item: Item): string | null {
-  if (item.category === "other" && item.category_note) return item.category_note;
-  return item.category && isCategoryCode(item.category) ? categoryLabel(item.category) : null;
+  return item.category && isCategoryCode(item.category) ? describeCategory(item.category, item.category_note) : null;
 }

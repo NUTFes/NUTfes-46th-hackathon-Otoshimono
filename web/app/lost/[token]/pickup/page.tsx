@@ -24,7 +24,7 @@ export default function PickupPage(props: PageProps<"/lost/[token]/pickup">) {
   );
 }
 
-type Matched = { management_number: string; storage_location: string };
+type Matched = { management_number: string; storage_location: string; item_status: string };
 
 async function Pickup({ params }: Pick<PageProps<"/lost/[token]/pickup">, "params">) {
   const { token } = await params;
@@ -32,7 +32,7 @@ async function Pickup({ params }: Pick<PageProps<"/lost/[token]/pickup">, "param
 
   // 実行委員が受取案内を送った（found_notified）紛失届の、照合した物（#15 の matched_item_id）だけを出す
   const { rows } = await db.query<Matched>(
-    `SELECT i.management_number, i.storage_location
+    `SELECT i.management_number, i.storage_location, i.status AS item_status
        FROM lost_reports r
        JOIN items i ON i.id = r.matched_item_id
       WHERE r.token = $1
@@ -43,6 +43,16 @@ async function Pickup({ params }: Pick<PageProps<"/lost/[token]/pickup">, "param
   );
   const matched = rows[0];
   if (!matched) notFound();
+
+  // 案内を送った後に、物が別の人に渡ったり見当たらなくなったりしたら、無い物を取りに来てもらわないよう管理番号は出さない
+  if (matched.item_status !== "registered") {
+    return (
+      <PageHeading
+        title="受け取りのご案内を確認しています"
+        description="お手数ですが、実行委員会の本部にお問い合わせください。"
+      />
+    );
+  }
 
   return (
     <>

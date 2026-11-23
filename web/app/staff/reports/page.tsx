@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Page, PageHeading, StaffHeader, StaffTabs } from "@/components/ui";
-import { categoryLabel, isCategoryCode } from "@/lib/categories";
+import { isCategoryCode } from "@/lib/categories";
 import { db } from "@/lib/db";
+import { formatDateTime } from "@/lib/format";
+import { describeCategory } from "@/lib/item-registration";
 import { isLostReportStatus, lostReportStatusLabel } from "@/lib/lost-reports";
 import { requireStaff } from "@/lib/staff-auth";
 import { StatusFilter } from "./status-filter";
@@ -81,10 +83,9 @@ async function Reports({ searchParams }: Pick<PageProps<"/staff/reports">, "sear
   );
 }
 
-/** 「財布」のようなカテゴリ名。「その他」は届け出に書かれた品物の名前を出す。 */
+/** 「財布」のようなカテゴリ名。「その他」は「その他（帽子）」のように届け出に書かれた品物の名前を添える（物品の画面と同じ）。 */
 function itemName(row: Row): string {
-  if (row.category === "other" && row.item_description) return row.item_description;
-  return isCategoryCode(row.category) ? categoryLabel(row.category) : row.category;
+  return isCategoryCode(row.category) ? describeCategory(row.category, row.item_description) : row.category;
 }
 
 /**
@@ -101,14 +102,3 @@ function describeStatus(row: Row): string {
   return label;
 }
 
-const DATE_TIME = new Intl.DateTimeFormat("ja-JP", {
-  timeZone: "Asia/Tokyo",
-  month: "numeric",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function formatDateTime(date: Date): string {
-  return DATE_TIME.format(date);
-}

@@ -25,8 +25,18 @@ export function HandoverForm({ itemId, backHref }: { itemId: string; backHref: s
   // cacheComponents では、離れた画面の状態が残る（React の Activity で隠すだけ）。
   // 成功・401 で画面を移ったとき、送信中に「戻る」で離れたときに「記録しています…」のまま残らないよう、
   // 画面が隠れるときに送信中の表示を戻す。成功してから移るまでのあいだにボタンが元に戻らないよう、
-  // 送信の処理の最後では戻さない
-  useLayoutEffect(() => () => setSending(false), []);
+  // 送信の処理の最後では戻さない。
+  // 入力も消す。受渡を取り消して記録し直すときに、前に受け取った人の氏名・連絡先と確認のチェックを残さない
+  useLayoutEffect(
+    () => () => {
+      setSending(false);
+      setInput(EMPTY_HANDOVER_INPUT);
+      setErrors({});
+      setFailure(null);
+      setReceiptHref(null);
+    },
+    [],
+  );
 
   function update<K extends keyof HandoverInput>(field: K, value: HandoverInput[K]) {
     setInput((current) => ({ ...current, [field]: value }));

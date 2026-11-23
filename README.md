@@ -21,7 +21,7 @@ Docker Compose、Node.js 22、npm を使用します。以下のコマンドは�
 ### PostgreSQL を Docker で起動し、Next.js をローカルで開発する
 
 ```sh
-docker compose up --wait db
+docker compose up --wait db mailpit
 cd web
 cp .env.example .env.local
 npm ci
@@ -41,6 +41,8 @@ PowerShell では `cp .env.example .env.local` の代わりに `Copy-Item .env.e
 実行委員の画面は [http://127.0.0.1:3000/staff/login](http://127.0.0.1:3000/staff/login) からログインします。パスワードは `.env.local` の `STAFF_PASSCODE` です（`.env.example` から作った場合は `otoshimono-dev-passcode`）。共通の UI 部品の見本は、開発中だけ [http://127.0.0.1:3000/dev/ui](http://127.0.0.1:3000/dev/ui) で見られます。
 
 以前に `.env.local` を作っていた場合は、`.env.example` にある `STAFF_PASSCODE` と `SESSION_SECRET` の2行を `.env.local` に書き足してください。本番では、どちらも推測されにくい長い値にしてください。
+
+落とし主へのメールは、開発中は Mailpit（メール確認用のサーバー）が受け取るだけで、外には送りません。届いたメールは [http://127.0.0.1:8025](http://127.0.0.1:8025) で見られます。以前に `.env.local` を作っていた場合は、`.env.example` の `SMTP_HOST` から `APP_ORIGIN` までの行を `.env.local` に書き足してください。本番では、`SMTP_*` と `MAIL_FROM` を本物のメールサーバーの値に、`MAIL_SUBJECT_PREFIX` を空に、`APP_ORIGIN` を本番の URL にします。
 
 Docker Compose の `app` は本番と同じ設定（`NODE_ENV=production`）で動くので、ログインの Cookie は HTTPS でしか保存されません。PC の `http://127.0.0.1:3000` からは使えますが、同じネットワークのスマホから `http://` で開くとログインが保たれません。スマホで試すときは `npm run dev` を使ってください。
 

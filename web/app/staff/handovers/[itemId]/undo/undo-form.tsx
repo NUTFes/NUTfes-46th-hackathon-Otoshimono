@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Button, ButtonLink, Notice } from "@/components/ui";
 import styles from "../page.module.css";
 
@@ -10,6 +10,10 @@ export function UndoForm({ itemId, cancelHref }: { itemId: string; cancelHref: s
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+
+  // cacheComponents では、離れた画面の状態が残る。画面を移ったときや送信中に離れたときに
+  // 「取り消しています…」のまま残らないよう、画面が隠れるときに戻す（受渡の記録画面と同じ）
+  useLayoutEffect(() => () => setSending(false), []);
 
   async function undo() {
     if (sending) return;

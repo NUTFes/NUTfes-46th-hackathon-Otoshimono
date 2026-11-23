@@ -56,6 +56,11 @@ export const MAX_LENGTH: Record<LostReportField, number> = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** 状況ページ（/lost/[token]）の token の形か。API が作る 32 バイトの乱数（base64url で 43 文字）。 */
+export function isLostReportToken(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
 /** 送り直しで二重に登録しないために、画面が届け出ごとに作る ID（UUID）か。 */
 export function isRequestId(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
@@ -138,4 +143,21 @@ export function describeColor(report: LostReport): string | null {
   if (report.color === null) return null;
   const label = colorLabel(report.color);
   return report.colorNote ? `${label}（${report.colorNote}）` : label;
+}
+
+/** 紛失届の確認状況（lost_reports.status）。値の意味は docs/spec/routes.md の表。 */
+export const LOST_REPORT_STATUSES = [
+  { code: "pending", label: "確認待ち" },
+  { code: "not_found_notified", label: "該当なしを通知済み / 照合を継続" },
+  { code: "found_notified", label: "見つかった旨を通知済み" },
+] as const;
+
+export type LostReportStatus = (typeof LOST_REPORT_STATUSES)[number]["code"];
+
+export function isLostReportStatus(value: unknown): value is LostReportStatus {
+  return LOST_REPORT_STATUSES.some((status) => status.code === value);
+}
+
+export function lostReportStatusLabel(status: LostReportStatus): string {
+  return LOST_REPORT_STATUSES.find((s) => s.code === status)!.label;
 }

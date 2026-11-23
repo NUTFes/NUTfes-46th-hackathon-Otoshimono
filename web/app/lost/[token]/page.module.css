@@ -1,0 +1,30 @@
+/* V-STATUS の配置。部品の見た目は web/components/ui。 */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.count {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 26px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.multiline {
+  white-space: pre-wrap;
+}

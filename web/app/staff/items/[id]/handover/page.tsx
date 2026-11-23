@@ -1,0 +1,85 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { ButtonLink, Notice, Page, PageHeading, StaffHeader } from "@/components/ui";
+import { categoryLabel, isCategoryCode } from "@/lib/categories";
+import { db } from "@/lib/db";
+import { isItemId } from "@/lib/handovers";
+import { requireStaff } from "@/lib/staff-auth";
+import { HandoverForm } from "./handover-form";
+
+export const metadata: Metadata = {
+  title: "受渡を記録する | 技大祭 落とし物管理",
+};
+
+// M-HANDOVER: 本登録済の物品を落とし主に渡したときの記録。
+export default function HandoverPage(props: PageProps<"/staff/items/[id]/handover">) {
+  return (
+    <Suspense fallback={<StaffHeader />}>
+      <Handover params={props.params} />
+    </Suspense>
+  );
+}
+
+type Item = {
+  status: string;
+  management_number: string | null;
+  category: string | null;
+  category_note: string | null;
+  storage_location: string | null;
+};
+
+async function Handover({ params }: Pick<PageProps<"/staff/items/[id]/handover">, "params">) {
+  await requireStaff();
+  const { id } = await params;
+  if (!isItemId(id)) notFound();
+
+  const { rows } = await db.query<Item>(
+    `SELECT status, management_number, category, category_note, storage_location
+       FROM items WHERE id = $1`,
+    [id],
+  );
+  const item = rows[0];
+  if (!item) notFound();
+
+  const detailHref = `/staff/items/${id}`;
+  const summary = [item.management_number, itemName(item), item.storage_location]
+    .filter(Boolean)
+    .join(" / ");
+
+  return (
+    <>
+      <StaffHeader backHref={detailHref} />
+      <Page>
+        <PageHeading title="受渡を記録する" description={summary || undefined} />
+        {item.status === "registered" ? (
+          <>
+            <Notice title="管理番号と現物を確認してください">本登録した物品の受渡を記録します。</Notice>
+            <HandoverForm itemId={id} backHref={detailHref} />
+          </>
+        ) : item.status === "handed_over" ? (
+          <>
+            <Notice title="この物品はすでに受渡済です" tone="warning">
+              受渡記録を確認してください。
+            </Notice>
+            <ButtonLink href={`/staff/handovers/${id}`}>受渡記録を確認する</ButtonLink>
+          </>
+        ) : (
+          <>
+            <Notice title="この物品は受渡を記録できません" tone="warning">
+              本登録済の物品だけ受渡を記録できます。
+            </Notice>
+            <ButtonLink href={detailHref} variant="secondary">
+              物品の詳細へ戻る
+            </ButtonLink>
+          </>
+        )}
+      </Page>
+    </>
+  );
+}
+
+function itemName(item: Item): string | null {
+  if (item.category === "other" && item.category_note) return item.category_note;
+  return item.category && isCategoryCode(item.category) ? categoryLabel(item.category) : null;
+}

@@ -1,0 +1,26 @@
+/* M-HANDOVER の配置。部品の見た目は web/components/ui。 */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.check {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.error {
+  color: var(--color-error);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}

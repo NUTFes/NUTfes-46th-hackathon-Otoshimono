@@ -8,8 +8,10 @@ import { db } from "@/lib/db";
 import { isUuid } from "@/lib/drops";
 import { describeCategory, describeItemColor } from "@/lib/item-registration";
 import { itemStatusLabel } from "@/lib/item-status";
+import { foundNoticesFor } from "@/lib/report-notices";
 import { requireStaff } from "@/lib/staff-auth";
 import { formatDateTime } from "../format";
+import { FoundNotices } from "./found-notices";
 import styles from "./detail.module.css";
 
 export const metadata: Metadata = {
@@ -71,6 +73,8 @@ async function ItemDetail({ params, searchParams }: PageProps<"/staff/items/[id]
       ? describeCategory(item.category, item.category_note)
       : `${item.box_name}の通知`;
   const color = item.color && isColorCode(item.color) ? describeItemColor(item.color, item.color_note) : null;
+  // 受け渡す前に、受取案内を送った届け出人がいることに気づけるようにする
+  const foundNotices = item.status === "registered" ? await foundNoticesFor(id) : [];
   // 本登録の写真がなければ、拾得者の写真を出す
   const photoId = item.register_photo_id ?? item.drop_photo_id;
 
@@ -116,6 +120,9 @@ async function ItemDetail({ params, searchParams }: PageProps<"/staff/items/[id]
           { label: "届いた日時", value: formatDateTime(item.dropped_at) },
         ]}
       />
+      <FoundNotices reports={foundNotices} tone="warning">
+        受け渡すときは、届け出人本人か確かめてください。
+      </FoundNotices>
       <Actions id={id} status={item.status} />
     </>
   );

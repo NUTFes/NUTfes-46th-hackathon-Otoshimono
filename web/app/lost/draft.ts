@@ -92,6 +92,11 @@ export function saveLostReportDraft(input: LostReportInput): LostReportDraft {
   return draft;
 }
 
+/** 今の下書きの requestId（下書きがなければ null）。送信の応答が届いたときに、まだ同じ下書きかを確かめる。 */
+export function currentLostReportRequestId(): string | null {
+  return parse(readRaw())?.requestId ?? null;
+}
+
 /**
  * 送信が済んだ下書きを消す。送信のあいだに新しい下書きに変わっていたら（入力画面で直した場合など）、
  * そちらは消さない。

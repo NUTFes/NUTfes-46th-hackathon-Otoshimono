@@ -2,3 +2,5 @@ node_modules
 .next
 .env*
 npm-debug.log*
+# 開発中に保存した写真をイメージに入れない
+data

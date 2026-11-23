@@ -8,6 +8,8 @@ export function isBoxCode(value: unknown): value is string {
   return typeof value === "string" && BOX_CODE_PATTERN.test(value);
 }
 
-export function isDropId(value: unknown): value is string {
+export function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
 }
+
+export const isDropId = isUuid;

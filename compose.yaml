@@ -20,6 +20,8 @@ services:
       MAIL_FROM: "技大祭 落とし物窓口（TEST） <test@example.com>"
       MAIL_SUBJECT_PREFIX: "[TEST]"
       APP_ORIGIN: http://127.0.0.1:3000
+    volumes:
+      - photos_data:/app/data/photos
 
   # 開発用のメール確認サーバー。届いたメールは http://127.0.0.1:8025 で見られる
   mailpit:
@@ -46,3 +48,4 @@ services:
 
 volumes:
   postgres_data:
+  photos_data:

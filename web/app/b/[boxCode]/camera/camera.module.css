@@ -1,0 +1,43 @@
+.title {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+}
+
+/* V-CAMERA の撮影枠（342 × 480） */
+.viewfinder {
+  position: relative;
+  aspect-ratio: 342 / 480;
+  overflow: hidden;
+  background: var(--color-camera-preview);
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+/* V-PHOTO-READY の写真枠（342 × 352） */
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 342 / 352;
+  object-fit: contain;
+  background: var(--color-photo-placeholder);
+}
+
+/* 縦に積むボタンの間は 8px（DESIGN.md の Layout） */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

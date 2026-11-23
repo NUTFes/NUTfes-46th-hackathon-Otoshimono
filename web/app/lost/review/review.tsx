@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, ButtonLink, DefinitionList, Notice, PageHeading } from "@/components/ui";
 import { categoryLabel, requiresDescription } from "@/lib/categories";
 import { describeColor, validateLostReport } from "@/lib/lost-reports";
-import { clearLostReportDraft, useLostReportDraft } from "../draft";
+import { clearLostReportDraft, currentLostReportRequestId, useLostReportDraft } from "../draft";
 import styles from "./page.module.css";
 
 const REVIEW_PATH = "/lost/review";
@@ -51,6 +51,10 @@ export function LostReportReview() {
 
   async function submit() {
     setSubmission({ state: "sending" });
+    // 応答が届いたときに、この送信の確認画面をまだ見ているか。
+    // 「戻る」で入力画面へ移った、または直して別の内容の確認画面に進み直した（requestId が変わった）なら false
+    const stillReviewingThis = () =>
+      window.location.pathname === REVIEW_PATH && currentLostReportRequestId() === requestId;
     try {
       const response = await fetch("/api/lost-reports", {
         method: "POST",
@@ -64,19 +68,34 @@ export function LostReportReview() {
         message?: string;
       };
       if (!response.ok || !body.reportNumber || !body.token) {
+        // 別の内容の確認画面に進んでいたら、古い送信の失敗は出さない
+        if (!stillReviewingThis()) {
+          setSubmission({ state: "idle" });
+          return;
+        }
         setSubmission({
           state: "failed",
           message: body.message ?? "受け付けられませんでした。時間をおいてもう一度お試しください。",
         });
         return;
       }
+      if (!stillReviewingThis()) {
+        // 応答を待つあいだに確認画面を離れた、または直した内容で確認し直している。
+        // 画面は切り替えず、受付完了の表示にもしない（修正中・確認中の内容を失わないように）。
+        // 下書きは、まだ同じ requestId のときだけ消える
+        clearLostReportDraft(requestId);
+        setSubmission({ state: "idle" });
+        return;
+      }
       // 先に done にしてから下書きを消す（下書きが消えたことで入力画面へ戻されないように）
       setSubmission({ state: "done", reportNumber: body.reportNumber, token: body.token });
       clearLostReportDraft(requestId);
-      // 応答を待つあいだに「戻る」などで確認画面を離れていたら、移動しない
-      // （入力画面で書き足している途中の内容を、状況ページへの移動で失わないように）
-      if (window.location.pathname === REVIEW_PATH) router.replace(`/lost/${body.token}`);
+      router.replace(`/lost/${body.token}`);
     } catch {
+      if (!stillReviewingThis()) {
+        setSubmission({ state: "idle" });
+        return;
+      }
       setSubmission({
         state: "failed",
         message: "通信できませんでした。電波の良い場所でもう一度お試しください。",

@@ -6,6 +6,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: otoshimono
+      PGUSER: otoshimono
+      PGPASSWORD: otoshimono_dev
 
   db:
     image: postgres:17

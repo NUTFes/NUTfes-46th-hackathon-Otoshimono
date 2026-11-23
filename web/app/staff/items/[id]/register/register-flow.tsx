@@ -123,7 +123,8 @@ export function RegisterFlow({
       const response = await fetch(`/api/staff/items/${itemId}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        // 確認した写真も送り、確定までに差し替えられていないかをサーバーで確かめる
+        body: JSON.stringify({ ...input, photoId }),
       });
       if (response.status === 401) return router.replace("/staff/login");
       const body = (await response.json().catch(() => ({}))) as {

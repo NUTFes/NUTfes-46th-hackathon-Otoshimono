@@ -1,0 +1,14 @@
+/* M-EDIT の配置。部品の見た目は web/components/ui。 */
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* M-EDIT の写真枠（342 × 112） */
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 342 / 112;
+  object-fit: cover;
+  background: var(--color-photo-placeholder);
+}

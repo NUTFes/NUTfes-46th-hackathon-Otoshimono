@@ -52,7 +52,11 @@ export async function savePhotoFile(bytes: Uint8Array): Promise<{ id: string; fi
   const id = randomUUID();
   const fileKey = `${id}.jpg`;
   await mkdir(photoDir(), { recursive: true });
-  await writeFile(filePath(fileKey), bytes, { flag: "wx" });
+  // ディスクがいっぱいなどで途中まで書けたファイルは消す（DB に紐づかないファイルを残さない）
+  await writeFile(filePath(fileKey), bytes, { flag: "wx" }).catch(async (error) => {
+    await deletePhotoFile(fileKey);
+    throw error;
+  });
   return { id, fileKey };
 }
 

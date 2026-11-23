@@ -31,6 +31,15 @@
 - 受渡記録の氏名・連絡先を伏せる処理と、メールの送信は、担当1が作る関数を使う。
 - メール連絡と受渡には、担当1が本登録時に発行する管理番号を使う。
 
+### 共通の部品と関数（担当1が持つ。使う側は中身を変えず、足りなければ担当1に頼む）
+
+- **ページ・API の置き場所**: routes.md のパスがそのまま `web/app/` 以下のフォルダーになる（例: `/staff/items/[id]/handover` → `web/app/staff/items/[id]/handover/page.tsx`、`POST /api/staff/items/[id]/handover` → `web/app/api/staff/items/[id]/handover/route.ts`）。フォルダーの担当は routes.md の「担当」の列。
+- **UI 部品**: `web/components/ui/`（`StaffHeader`、`Page`、`PageHeading`、`Button`、`ButtonLink`、`Field`、`Input`、`Select`、`Textarea`、`Checkbox`、`Notice`、`StaffTabs`、`DefinitionList`）。見本は開発中だけ `/dev/ui` で見られる。画面ごとの配置は各ページの `page.module.css` に書く。
+- **色・余白などの値**: `web/app/globals.css` の CSS 変数（`var(--color-primary)` など）。値を直接書かない。
+- **実行委員の認証**: `web/lib/staff-auth.ts`。ページでは `<Suspense>` の中のコンポーネントで最初に `await requireStaff()` を呼ぶ（未ログインならログイン画面へ移る）。Route Handler では最初に `const rejected = await rejectUnlessStaff(); if (rejected) return rejected;` を書く（未ログインなら 401）。
+- **伏せ字**: `web/lib/mask.ts` の `maskName`、`maskPhone`、`maskEmail`。
+- **Next.js の注意**: `cacheComponents` が有効なので、Cookie や DB を読む処理と `await params`・`await searchParams` は `<Suspense>` の中のコンポーネントに置く。ページの `export default` 自体は同期のままにする（例: `web/app/staff/login/page.tsx`）。
+
 ## 技術スタック
 
 - `web/` が Next.js（App Router、React、TypeScript）。画面とAPIを1つのプロジェクトにまとめる。

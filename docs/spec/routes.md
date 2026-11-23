@@ -17,11 +17,21 @@
 | テーブル | 内容 | 担当 |
 |---|---|---|
 | `categories` | カテゴリ（作成済み: `001_create_categories.sql`） | — |
-| `boxes` | BOX の `boxCode`、名前、設置場所 | 担当1 |
-| `items` | 拾得物。仮登録から受渡までの状態（仮登録済 / 回収済 / 本登録済 / 受渡済 / 不明）、管理番号（L-0042 の形）、不明の理由 | 担当1 |
+| `boxes` | BOX の `code`（URL の `boxCode`）、名前、設置場所 | 担当1 |
+| `items` | 拾得物。仮登録から受渡までの状態（下記）、管理番号（L-0042 の形）、不明の理由 | 担当1 |
 | `item_photos` | 拾得物の写真（本体は永続ボリューム、ここには識別子） | 担当1 |
 | `lost_reports` | 紛失届。番号（R-0018 の形）、`token`、確認状況（下記）、照合した `items` | 担当2（照合した `items` の列は担当1） |
 | `handovers` | 受渡記録（氏名、電話番号、メール、本人確認メモ） | 担当2 |
+
+拾得物の状態 `items.status` の値（不明にしたときは元の状態を `previous_status` に残す）:
+
+| 値 | 画面での表示 |
+|---|---|
+| `provisional` | 仮登録済 |
+| `collected` | 回収済 |
+| `registered` | 本登録済 |
+| `handed_over` | 受渡済 |
+| `unknown` | 不明 |
 
 紛失届の確認状況 `lost_reports.status` の値:
 
@@ -47,6 +57,7 @@
 | ページ | 画面 | API（書き込み） | 担当 |
 |---|---|---|---|
 | `/staff/login` | M-LOGIN | `POST /api/staff/login`、`POST /api/staff/logout` | 担当1 |
+| `/staff` | （画面なし。ログインを確かめて `/staff/boxes` へ移す） | — | 担当1 |
 | `/staff/boxes`、`/staff/boxes/[boxCode]` | M-BOXES、M-BOX | — | 担当1 |
 | `/staff/scan` → `/staff/boxes/[boxCode]/collected` | M-SCAN → M-COLLECTED | `POST /api/staff/boxes/[boxCode]/collect` | 担当1 |
 | `/staff/boxes/[boxCode]/unknown` | M-BOX-UNKNOWN、M-BOX-UNKNOWN-STATE | `POST`、`DELETE /api/staff/items/[id]/unknown` | 担当1 |

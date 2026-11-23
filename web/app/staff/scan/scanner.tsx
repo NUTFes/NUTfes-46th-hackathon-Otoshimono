@@ -10,6 +10,8 @@ import styles from "./scanner.module.css";
 const ZXING_WASM_URL = new URL("zxing-wasm/reader/zxing_reader.wasm", import.meta.url).href;
 // 読み取りを試す間隔
 const SCAN_INTERVAL_MS = 300;
+// 登録されていない BOX の QR などで断られたら、同じ QR はしばらく送らない（映し続けても API を呼び続けない）
+const RETRY_SAME_CODE_MS = 3000;
 
 type Detector = { detect(source: HTMLVideoElement): Promise<{ rawValue: string }[]> };
 type Step = "starting" | "live" | "unavailable" | "collecting";
@@ -45,6 +47,7 @@ export function Scanner() {
     let cancelled = false;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let rejected: { boxCode: string; at: number } | null = null;
 
     async function collect(boxCode: string): Promise<void> {
       setStep("collecting");
@@ -61,6 +64,7 @@ export function Scanner() {
           router.push(`/staff/boxes/${boxCode}/collected?count=${body.collected}`);
           return;
         }
+        rejected = { boxCode, at: performance.now() };
         setMessage(response.status === 404 ? "登録されていないBOXのQRです。" : (body.error?.message ?? "回収を記録できませんでした。もう一度読み取ってください。"));
       } catch {
         if (cancelled) return;
@@ -78,6 +82,7 @@ export function Scanner() {
       if (cancelled) return;
       for (const code of codes) {
         const boxCode = boxCodeFrom(code.rawValue);
+        if (boxCode && rejected?.boxCode === boxCode && performance.now() - rejected.at < RETRY_SAME_CODE_MS) continue;
         if (boxCode) return collect(boxCode);
         setMessage("BOXのQRではありません。箱に貼られたQRを読み取ってください。");
       }

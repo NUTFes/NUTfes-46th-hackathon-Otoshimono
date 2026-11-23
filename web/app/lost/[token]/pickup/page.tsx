@@ -44,12 +44,13 @@ async function Pickup({ params }: Pick<PageProps<"/lost/[token]/pickup">, "param
   const matched = rows[0];
   if (!matched) notFound();
 
-  // 案内を送った後に、物が別の人に渡ったり見当たらなくなったりしたら、無い物を取りに来てもらわないよう管理番号は出さない
+  // 案内を送った後に、物が渡ったり見当たらなくなったりしたら、無い物を取りに来てもらわないよう管理番号は出さない。
+  // 受渡記録と紛失届は結びついていないので、本人に渡したのか別の人に渡したのかは区別できない。どちらにも当てはまる文言にする
   if (matched.item_status !== "registered") {
     return (
       <PageHeading
-        title="ご案内を確認しています"
-        description="お手数ですが、実行委員会の本部にお問い合わせください。"
+        title="受け渡し済みか、確認中です"
+        description="心当たりがない場合は、実行委員会の本部にお問い合わせください。"
       />
     );
   }

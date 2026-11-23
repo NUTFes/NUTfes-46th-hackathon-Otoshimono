@@ -6,18 +6,41 @@ import { Button, ButtonLink, Field, Notice, Select, Textarea } from "@/component
 import { UNKNOWN_NOTE_MAX_LENGTH, UNKNOWN_REASONS, validateUnknown, type UnknownErrors } from "@/lib/unknown";
 import styles from "./unknown-actions.module.css";
 
-type Target = { id: string; label: string };
+/** status は画面で見た状態（不明にするときに、今も同じ状態かを API で確かめる） */
+type Target = { id: string; label: string; status: string };
 
-async function call(url: string, init: RequestInit): Promise<{ ok: true } | { ok: false; message: string; errors?: UnknownErrors } | "login"> {
+type Failure = { ok: false; message: string; errors?: UnknownErrors; stale?: boolean };
+
+async function call(url: string, init: RequestInit): Promise<{ ok: true } | Failure | "login"> {
   try {
     const response = await fetch(url, init);
     if (response.status === 401) return "login";
     if (response.ok) return { ok: true };
     const body = (await response.json().catch(() => ({}))) as { error?: { message?: string; errors?: UnknownErrors } };
-    return { ok: false, message: body.error?.message ?? "記録できませんでした。もう一度お試しください。", errors: body.error?.errors };
+    return {
+      ok: false,
+      message: body.error?.message ?? "記録できませんでした。もう一度お試しください。",
+      errors: body.error?.errors,
+      // 画面を開いた後に、ほかの実行委員が状態を変えていた
+      stale: response.status === 409,
+    };
   } catch {
     return { ok: false, message: "通信できませんでした。電波の良い場所でもう一度お試しください。" };
   }
+}
+
+/** 失敗の案内。ほかの実行委員が状態を変えていたときは、読み直すボタンも出す（自動で読み直すと案内が消えるため）。 */
+function FailureNotice({ failure, onReload }: { failure: Failure; onReload: () => void }) {
+  return (
+    <div role="alert" className={styles.actions}>
+      <Notice tone="warning" title={failure.message} />
+      {failure.stale && (
+        <Button variant="secondary" onClick={onReload}>
+          最新の状態を表示する
+        </Button>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -39,7 +62,7 @@ export function UnknownForm({
   const [reason, setReason] = useState<string>(UNKNOWN_REASONS[0]);
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<UnknownErrors>({});
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useState<Failure | null>(null);
   const [sending, setSending] = useState(false);
 
   // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
@@ -53,10 +76,11 @@ export function UnknownForm({
       return;
     }
     setSending(true);
+    const expectedStatus = targets.find((target) => target.id === itemId)?.status;
     const outcome = await call(`/api/staff/items/${itemId}/unknown`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason, note }),
+      body: JSON.stringify({ reason, note, expectedStatus }),
     });
     if (outcome === "login") return router.replace("/staff/login");
     if (outcome.ok) {
@@ -64,7 +88,7 @@ export function UnknownForm({
       router.refresh();
     } else {
       if (outcome.errors) setErrors(outcome.errors);
-      setFailure(outcome.message);
+      setFailure(outcome);
     }
     setSending(false);
   }
@@ -134,9 +158,13 @@ export function UnknownForm({
         />
       </Field>
       {failure && (
-        <div role="alert">
-          <Notice tone="warning" title={failure} />
-        </div>
+        <FailureNotice
+          failure={failure}
+          onReload={() => {
+            setFailure(null);
+            router.refresh();
+          }}
+        />
       )}
       <div className={styles.actions}>
         <Button onClick={submit} disabled={sending || !itemId}>
@@ -150,29 +178,38 @@ export function UnknownForm({
   );
 }
 
-/** 「見つかった通知を元に戻す」など。戻したら afterHref へ移るか、同じ画面を読み直す。 */
+/**
+ * 「見つかった通知を元に戻す」など。戻したら afterHref へ移るか、同じ画面を読み直す。
+ * updatedAt は画面を作ったときの items.updated_at（DB の文字列のまま）。今と違えば、別の不明の記録なので戻さない。
+ */
 export function RestoreButton({
   itemId,
+  updatedAt,
   label,
   afterHref,
 }: {
   itemId: string;
+  updatedAt: string;
   label: string;
   afterHref?: string;
 }) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useState<Failure | null>(null);
 
   useEffect(() => () => setSending(false), []);
 
   async function restore() {
     setSending(true);
     setFailure(null);
-    const outcome = await call(`/api/staff/items/${itemId}/unknown`, { method: "DELETE" });
+    const outcome = await call(`/api/staff/items/${itemId}/unknown`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedUpdatedAt: updatedAt }),
+    });
     if (outcome === "login") return router.replace("/staff/login");
     if (!outcome.ok) {
-      setFailure(outcome.message);
+      setFailure(outcome);
       setSending(false);
       return;
     }
@@ -188,9 +225,13 @@ export function RestoreButton({
   return (
     <>
       {failure && (
-        <div role="alert">
-          <Notice tone="warning" title={failure} />
-        </div>
+        <FailureNotice
+          failure={failure}
+          onReload={() => {
+            setFailure(null);
+            router.refresh();
+          }}
+        />
       )}
       <Button onClick={restore} disabled={sending}>
         {sending ? "戻しています…" : label}

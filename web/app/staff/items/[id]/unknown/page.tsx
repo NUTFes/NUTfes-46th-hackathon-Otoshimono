@@ -30,6 +30,8 @@ type Item = {
   previous_status: string | null;
   unknown_reason: string | null;
   unknown_note: string | null;
+  /** 元に戻すときに、画面を作った後で不明の記録が変わっていないかを確かめる（DB の文字列のまま） */
+  updated_at: string;
   management_number: string | null;
   category: string | null;
   category_note: string | null;
@@ -43,7 +45,7 @@ async function ItemUnknown({ params }: Pick<PageProps<"/staff/items/[id]/unknown
   if (!isUuid(id)) notFound();
 
   const { rows } = await db.query<Item>(
-    `SELECT i.status, i.previous_status, i.unknown_reason, i.unknown_note, i.management_number,
+    `SELECT i.status, i.previous_status, i.unknown_reason, i.unknown_note, i.updated_at::text AS updated_at, i.management_number,
             i.category, i.category_note, i.storage_location, b.name AS box_name
        FROM items i JOIN boxes b ON b.id = i.box_id
       WHERE i.id = $1`,
@@ -76,7 +78,7 @@ async function ItemUnknown({ params }: Pick<PageProps<"/staff/items/[id]/unknown
             ]}
           />
           <Notice title="見つかったら元の状態に戻してください">不明の間は、新しい照合候補には含めません。</Notice>
-          <RestoreButton itemId={id} label={`見つかったので${previous}に戻す`} afterHref={`${detailHref}?restored=1`} />
+          <RestoreButton itemId={id} updatedAt={item.updated_at} label={`見つかったので${previous}に戻す`} afterHref={`${detailHref}?restored=1`} />
         </Page>
       </>
     );
@@ -88,7 +90,7 @@ async function ItemUnknown({ params }: Pick<PageProps<"/staff/items/[id]/unknown
       <Page>
         <PageHeading title="物品を不明にする" description={summary} />
         {UNKNOWN_FROM_STATUSES.some((status) => status === item.status) ? (
-          <UnknownForm targets={[{ id, label: "" }]} backHref={detailHref} warning />
+          <UnknownForm targets={[{ id, label: "", status: item.status }]} backHref={detailHref} warning />
         ) : (
           <>
             <Notice title="この物品は不明にできません" tone="warning">

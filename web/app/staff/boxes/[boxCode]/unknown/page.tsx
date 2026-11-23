@@ -30,6 +30,8 @@ type Notification = {
   previous_status: string | null;
   unknown_reason: string | null;
   unknown_note: string | null;
+  /** 元に戻すときに、画面を作った後で不明の記録が変わっていないかを確かめる（DB の文字列のまま） */
+  updated_at: string;
   dropped_at: Date;
   has_photo: boolean;
 };
@@ -45,7 +47,7 @@ async function BoxUnknown({ params }: Pick<PageProps<"/staff/boxes/[boxCode]/unk
 
   // この BOX の通知のうち、まだ本登録していないもの（仮登録済・回収済）と、そこから不明にしたもの
   const { rows } = await db.query<Notification>(
-    `SELECT i.id, i.status, i.previous_status, i.unknown_reason, i.unknown_note, i.dropped_at,
+    `SELECT i.id, i.status, i.previous_status, i.unknown_reason, i.unknown_note, i.updated_at::text AS updated_at, i.dropped_at,
             EXISTS (SELECT 1 FROM item_photos p WHERE p.item_id = i.id AND p.kind = 'drop') AS has_photo
        FROM items i JOIN boxes b ON b.id = i.box_id
       WHERE b.code = $1
@@ -85,7 +87,7 @@ async function BoxUnknown({ params }: Pick<PageProps<"/staff/boxes/[boxCode]/unk
                 />
                 <p className={styles.muted}>見つかった場合は、元の{itemStatusLabel(row.previous_status ?? "")}に戻せます。</p>
                 <div className={styles.actions}>
-                  <RestoreButton itemId={row.id} label="見つかった通知を元に戻す" />
+                  <RestoreButton itemId={row.id} updatedAt={row.updated_at} label="見つかった通知を元に戻す" />
                   {row === unknowns[unknowns.length - 1] && (
                     <ButtonLink href="/staff/boxes" variant="secondary">
                       BOX一覧に戻る
@@ -103,7 +105,7 @@ async function BoxUnknown({ params }: Pick<PageProps<"/staff/boxes/[boxCode]/unk
             {/* 不明にした通知は選択肢から消えるので、選択肢が変わったら選んだ通知も先頭に戻す */}
             <UnknownForm
               key={targets.map((row) => row.id).join()}
-              targets={targets.map((row) => ({ id: row.id, label: describe(row) }))}
+              targets={targets.map((row) => ({ id: row.id, label: describe(row), status: row.status }))}
               backHref={boxHref}
             />
           </>

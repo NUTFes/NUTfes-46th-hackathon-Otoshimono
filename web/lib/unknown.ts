@@ -5,6 +5,8 @@
 export const UNKNOWN_REASONS = ["回収時に見当たらない", "紛失", "その他"] as const;
 export const OTHER_UNKNOWN_REASON = "その他";
 export const UNKNOWN_NOTE_MAX_LENGTH = 500;
+/** 画面を開いた後に、ほかの実行委員が状態や不明の記録を変えていたとき（API の 409） */
+export const STALE_UNKNOWN_MESSAGE = "ほかの実行委員が先に状態を変えました。今の状態を確かめてから、もう一度操作してください。";
 
 /** 不明にできる状態（受渡済は渡した後なので不明にしない）。 */
 export const UNKNOWN_FROM_STATUSES = ["provisional", "collected", "registered"] as const;

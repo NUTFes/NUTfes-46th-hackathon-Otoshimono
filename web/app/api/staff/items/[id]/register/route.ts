@@ -16,9 +16,13 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/items
   const { id } = await ctx.params;
   if (!isUuid(id)) return error("物品が見つかりません。", 404);
 
-  const result = validateRegistration(await request.json().catch(() => null));
+  const body: unknown = await request.json().catch(() => null);
+  const result = validateRegistration(body);
   if (!result.ok) return error("入力内容を確認してください。", 400, { errors: result.errors });
   const value = result.value;
+  // 確認画面で見た写真。確定までに別の実行委員が差し替えていたら登録しない
+  const photoId = body !== null && typeof body === "object" ? (body as { photoId?: unknown }).photoId : undefined;
+  if (!isUuid(photoId)) return error("登録する物品の写真を撮ってください。", 400);
 
   const client = await db.connect();
   try {
@@ -36,10 +40,18 @@ export async function POST(request: Request, ctx: RouteContext<"/api/staff/items
       await client.query("ROLLBACK");
       return error("回収済の物品だけ本登録できます。", 409);
     }
-    const photo = await client.query("SELECT 1 FROM item_photos WHERE item_id = $1 AND kind = 'register'", [id]);
-    if (photo.rowCount === 0) {
+    // 写真の差し替えも物品の行を押さえてから行うので、ここで見た写真のまま確定する
+    const photo = await client.query<{ id: string }>(
+      "SELECT id FROM item_photos WHERE item_id = $1 AND kind = 'register'",
+      [id],
+    );
+    if (!photo.rows[0]) {
       await client.query("ROLLBACK");
       return error("登録する物品の写真を撮ってください。", 400);
+    }
+    if (photo.rows[0].id !== photoId) {
+      await client.query("ROLLBACK");
+      return error("写真が差し替えられています。画面を読み直して、写真を確かめてください。", 409);
     }
 
     const updated = await client.query<{ management_number: string }>(

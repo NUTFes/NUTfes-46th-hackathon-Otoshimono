@@ -16,6 +16,8 @@ type DropResult = { kind: "ok"; dropId: string } | { kind: "retry" } | { kind: "
 const memoryIds = new Map<string, string>();
 // StrictMode で effect が2回動いても1回だけ送るよう、送信中の Promise も共有する
 const inflight = new Map<string, Promise<DropResult>>();
+// サーバーに届いた dropId。ボタンを押したときや画面に戻ったときに、届いている仮登録を送り直さない
+const delivered = new Set<string>();
 // このページ（ドキュメント）で、BOX ごとに新しい届け出かどうかをもう判断したか
 const decided = new Set<string>();
 // BOX ごとに、受付の画面（V-DROP・撮影画面）をいくつ表示しているか。0 になったら送り直しをやめる
@@ -112,9 +114,10 @@ export async function withRetry(
 
 /** 仮登録を送る（同じ dropId なら何度送っても1件）。 */
 function ensureDrop(boxCode: string): Promise<DropResult> {
+  const dropId = currentDropId(boxCode);
+  if (delivered.has(dropId)) return Promise.resolve({ kind: "ok", dropId });
   let pending = inflight.get(boxCode);
   if (!pending) {
-    const dropId = currentDropId(boxCode);
     pending = withRetry(
       (signal) =>
         fetch("/api/drops", {
@@ -125,7 +128,10 @@ function ensureDrop(boxCode: string): Promise<DropResult> {
         }),
       { shouldContinue: () => isDropPageShown(boxCode) },
     ).then((response): DropResult => {
-      if (response?.ok) return { kind: "ok", dropId };
+      if (response?.ok) {
+        delivered.add(dropId);
+        return { kind: "ok", dropId };
+      }
       // 400・404 などは送り直しても同じ結果になる（408・429 は待てば通る）
       if (response && response.status < 500 && response.status !== 408 && response.status !== 429) {
         return { kind: "gone" };

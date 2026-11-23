@@ -52,6 +52,8 @@ export function Camera({ boxCode }: { boxCode: string }) {
     return () => {
       shownRef.current = false;
       hide();
+      // 画面を離れても状態は残る（cacheComponents）ので、完了画面から戻ってきたときにボタンを押せるよう戻しておく
+      setStep((current) => (current.kind === "sending" ? { ...current, kind: "captured" } : current));
     };
   }, [boxCode]);
 

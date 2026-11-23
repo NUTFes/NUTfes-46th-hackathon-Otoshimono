@@ -25,7 +25,11 @@ export function DropForm({ boxCode }: { boxCode: string }) {
   useEffect(() => {
     const hide = showDropPage(boxCode);
     void ensureDropUntilDone(boxCode);
-    return hide;
+    return () => {
+      hide();
+      // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
+      setSending("none");
+    };
   }, [boxCode]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -38,8 +42,11 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     if (dropId) await sendAnswers(boxCode, dropId, answers);
     // 待っている間に画面を離れていたら、別の画面を見ている人を動かさない。
     // 送り直しても受け付けられない（BOX が無くなったなど）ときは、完了とは出さない
-    if (dropId && isDropPageShown(boxCode)) router.push(`/b/${boxCode}/sent`);
-    // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
+    if (dropId && isDropPageShown(boxCode)) {
+      // 完了画面に切り替わるまでは「送信しています…」のままにする（push は切り替えを待たずに戻る）
+      router.push(`/b/${boxCode}/sent`);
+      return;
+    }
     setSending("none");
   }
 
@@ -50,7 +57,10 @@ export function DropForm({ boxCode }: { boxCode: string }) {
     setSending("camera");
     const dropId = await ensureDropUntilDone(boxCode);
     if (dropId) await sendAnswers(boxCode, dropId, answers);
-    if (dropId && isDropPageShown(boxCode)) router.push(`/b/${boxCode}/camera`);
+    if (dropId && isDropPageShown(boxCode)) {
+      router.push(`/b/${boxCode}/camera`);
+      return;
+    }
     setSending("none");
   }
 

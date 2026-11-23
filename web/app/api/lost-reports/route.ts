@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { isRequestId, validateLostReport } from "@/lib/lost-reports";
+import { sendLostReportReceived } from "@/lib/mail";
 
 type Saved = { report_number: string; token: string };
 
@@ -52,8 +54,21 @@ export async function POST(request: Request) {
         report.email,
       ],
     );
-    if (inserted.rows[0]) {
-      return Response.json(toBody(inserted.rows[0]), { status: 201 });
+    const saved = inserted.rows[0];
+    if (saved) {
+      // 受付メール（E-RECEIVED）は、応答を返してから送る。メールサーバーにつながらなくても
+      // 受付完了の画面を待たせず、紛失届の保存も取り消さない（送れなかったことは mail.ts がログに出す）。
+      // 送り直し（下の 200）では送らないので、同じ届け出にメールが2通届くことはない
+      after(() =>
+        sendLostReportReceived({
+          to: report.email,
+          token: saved.token,
+          reportNumber: saved.report_number,
+          category: report.category,
+          itemDescription: report.itemDescription,
+        }),
+      );
+      return Response.json(toBody(saved), { status: 201 });
     }
 
     // 同じ ID ですでに受け付けている（前回の応答が届かずに送り直された）。前回の受付結果を返す

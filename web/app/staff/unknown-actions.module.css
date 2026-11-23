@@ -1,0 +1,6 @@
+/* 縦に積むボタンの間は 8px（DESIGN.md の Layout） */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

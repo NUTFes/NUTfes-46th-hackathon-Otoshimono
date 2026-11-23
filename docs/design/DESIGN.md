@@ -13,6 +13,7 @@ colors:
   camera-preview: "#222823"
   notice-bg: "#F8F2E7"
   notice-text: "#805C24"
+  error: "#B3261E"
 typography:
   display:
     fontFamily: "Noto Sans JP, sans-serif"
@@ -162,6 +163,7 @@ Figma「無題」（https://www.figma.com/design/fEtGRXwFKjfE8rXuIMWKmu/）の
 
 ### Tertiary
 - **注意の面と文字**（notice-bg、notice-text）: 気をつけてほしいことを伝える枠。数は少なく、1画面に1つまで。
+- **エラーの文字**（error）: 入力の誤りを伝える文字と、誤りのある入力欄の枠線。Figma には無いので、実装のときに足した（白地でのコントラスト 6.5:1）。
 
 ### Named Rules
 **The One Green Rule.** 緑は「押せるもの」と「選択中」だけに使う。見出しや装飾を緑にしない。

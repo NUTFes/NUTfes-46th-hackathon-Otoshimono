@@ -26,6 +26,7 @@ cd web
 cp .env.example .env.local
 npm ci
 npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
@@ -34,6 +35,14 @@ PowerShell では `cp .env.example .env.local` の代わりに `Copy-Item .env.e
 [http://127.0.0.1:3000](http://127.0.0.1:3000) を開きます。Next.js はファイルの変更を開発サーバーに反映します。PostgreSQL には `127.0.0.1:5432` で接続します。`.env.example` の認証情報はローカル開発用です。
 
 `npm run db:migrate` は、`web/db/migrations` のSQLのうち未適用のものだけを適用します。`main` を取り込んで新しいSQLが増えたときも、同じコマンドを実行します。
+
+`npm run db:seed` は、開発用のデータ（`web/db/seed.sql`。BOX 3つと、各状態の拾得物。本登録済には管理番号 `L-0001` から）を入れ直します。何度実行しても同じ状態になりますが、拾得物を参照する紛失届や受渡記録も消えます。本番（`NODE_ENV=production`）では実行できません。
+
+実行委員の画面は [http://127.0.0.1:3000/staff/login](http://127.0.0.1:3000/staff/login) からログインします。パスワードは `.env.local` の `STAFF_PASSCODE` です（`.env.example` から作った場合は `otoshimono-dev-passcode`）。共通の UI 部品の見本は、開発中だけ [http://127.0.0.1:3000/dev/ui](http://127.0.0.1:3000/dev/ui) で見られます。
+
+以前に `.env.local` を作っていた場合は、`.env.example` にある `STAFF_PASSCODE` と `SESSION_SECRET` の2行を `.env.local` に書き足してください。本番では、どちらも推測されにくい長い値にしてください。
+
+Docker Compose の `app` は本番と同じ設定（`NODE_ENV=production`）で動くので、ログインの Cookie は HTTPS でしか保存されません。PC の `http://127.0.0.1:3000` からは使えますが、同じネットワークのスマホから `http://` で開くとログインが保たれません。スマホで試すときは `npm run dev` を使ってください。
 
 ### Next.js と PostgreSQL を Docker Compose で起動する
 

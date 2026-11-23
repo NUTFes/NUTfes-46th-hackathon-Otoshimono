@@ -162,7 +162,8 @@ export type DropAnswers = { reportedCategory: string | null; isValuable: true | 
 
 // BOX ごとの回答の送信。前の送信が終わってから次を送るので、古い回答が後から届いて新しい回答を上書きしない
 const answersQueue = new Map<string, Promise<void>>();
-// BOX ごとに、何回目の回答か。新しい回答を送ったら、前の回答は送り直さない
+// BOX ごとの、最後の回答の番号（押した時刻のミリ秒）。新しい回答を送ったら、前の回答は送り直さない。
+// サーバーも番号を比べ、古い回答が後から届いても新しい回答を上書きしない
 const answersVersion = new Map<string, number>();
 
 /**
@@ -171,7 +172,8 @@ const answersVersion = new Map<string, number>();
  * 押した時点の回答を呼んだ順に送り、新しい回答を送ったら前の回答はやめる。
  */
 export function sendAnswers(boxCode: string, answers: DropAnswers): Promise<void> {
-  const version = (answersVersion.get(boxCode) ?? 0) + 1;
+  // 同じミリ秒に2回押しても、番号は必ず増やす
+  const version = Math.max(Date.now(), (answersVersion.get(boxCode) ?? 0) + 1);
   answersVersion.set(boxCode, version);
   const isLatest = () => answersVersion.get(boxCode) === version;
   const previous = answersQueue.get(boxCode) ?? Promise.resolve();
@@ -184,7 +186,7 @@ export function sendAnswers(boxCode: string, answers: DropAnswers): Promise<void
         fetch(`/api/drops/${dropId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(answers),
+          body: JSON.stringify({ ...answers, answersVersion: version }),
           signal,
         }),
       { shouldContinue: () => isLatest() && isDropPageShown(boxCode) },

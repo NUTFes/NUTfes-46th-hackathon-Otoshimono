@@ -47,6 +47,7 @@ export function Scanner() {
   // 「QRを読み取る」を押してから、画面を離れるまでカメラを動かして読み取りを続ける（離れたら止め、押す前に戻す）
   useEffect(() => {
     if (!reading) return;
+    const video = videoRef.current;
     let cancelled = false;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -118,6 +119,8 @@ export function Scanner() {
       cancelled = true;
       clearTimeout(timer);
       stream?.getTracks().forEach((track) => track.stop());
+      // 止めた映像を外して、押す前の枠に戻す
+      if (video) video.srcObject = null;
       // 戻ってきたときは、もう一度「QRを読み取る」を押してもらう
       setStep((current) => (current === "unavailable" ? current : "idle"));
       setMessage(null);

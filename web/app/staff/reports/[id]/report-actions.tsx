@@ -27,6 +27,8 @@ export function ReportActions({
   const [sending, setSending] = useState<Sending>("none");
   const [result, setResult] = useState<{ tone: "info" | "warning"; message: string } | null>(null);
   const selected = candidates.find((candidate) => candidate.id === itemId);
+  // すでに受取案内を送った物と同じなら、送り直さない（取り違えの訂正は別の物を選んで送る）
+  const alreadySent = selected !== undefined && selected.id === matchedItemId;
 
   // 画面を離れても状態は残る（cacheComponents）ので、戻ってきたときに押せるよう戻しておく
   useEffect(() => () => setSending("none"), []);
@@ -38,7 +40,7 @@ export function ReportActions({
       const response = await fetch(`/api/staff/reports/${reportId}/${kind === "found" ? "found-notice" : "not-found-notice"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: kind === "found" ? JSON.stringify({ itemId }) : "{}",
+        body: kind === "found" ? JSON.stringify({ itemId, previousItemId: matchedItemId }) : "{}",
       });
       if (response.status === 401) {
         router.replace("/staff/login");
@@ -91,7 +93,7 @@ export function ReportActions({
           <Notice tone={result.tone} title={result.message} />
         </div>
       )}
-      <Button onClick={() => send("found")} disabled={!selected || sending !== "none"}>
+      <Button onClick={() => send("found")} disabled={!selected || alreadySent || sending !== "none"}>
         {sending === "found" ? "送信しています…" : "受取案内を送る"}
       </Button>
       {status === "pending" && (

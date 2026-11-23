@@ -16,6 +16,7 @@ export type LockedReport = {
   token: string;
   email: string;
   status: string;
+  matched_item_id: string | null;
 };
 
 export type NoticeOutcome = { ok: true; body: object } | { ok: false; status: number; message: string };
@@ -34,7 +35,7 @@ export async function withLockedReport(
   try {
     await client.query("BEGIN");
     const { rows } = await client.query<LockedReport>(
-      "SELECT id, token, email, status FROM lost_reports WHERE id = $1 FOR UPDATE",
+      "SELECT id, token, email, status, matched_item_id FROM lost_reports WHERE id = $1 FOR UPDATE",
       [reportId],
     );
     const outcome: NoticeOutcome = rows[0]
